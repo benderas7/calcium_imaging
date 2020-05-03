@@ -107,6 +107,19 @@ def set_opts(fnames, fr=FR, decay_time=DECAY_TIME, strides=STRIDES,
     return opts
 
 
+def set_up_local_cluster(backend='local', n_processes=None,
+                         single_thread=False):
+    """The variable backend determines the type of cluster used. The default
+    value 'local' uses the multiprocessing package. The ipyparallel option is
+    also available. The resulting variable dview expresses the cluster
+    option. If you use dview=dview in the downstream analysis then parallel
+    processing will be used. If you use dview=None then no parallel processing
+    will be employed."""
+    c, dview, n_processes = cm.cluster.setup_cluster(
+        backend=backend, n_processes=n_processes, single_thread=single_thread)
+    return c, dview, n_processes
+
+
 def motion_corr():
     return
 
@@ -177,6 +190,9 @@ def main(log=LOG, data_dir=DATA_DIR, disp_movie=DISP_MOVIE):
 
     # Set options for extraction
     opts = set_opts(fnames)
+
+    # Configure local cluster
+    set_up_local_cluster()
 
     # Clean up logger if necessary
     if log:
