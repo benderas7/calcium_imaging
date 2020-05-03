@@ -16,10 +16,21 @@ from caiman.utils.utils import download_demo
 from caiman.utils.visualization import plot_contours, nb_view_patches,\
     nb_plot_contour
 
-# Set up constants
+# Set up constants - logging
+LOG = True
+LOG_FN = '/tmp/caiman.log'
+LOG_LEVEL = logging.WARNING
+
+DATA_DIR = 'data'
+######
 
 
-def set_up_logger():
+def set_up_logger(fn=LOG_FN, level=LOG_LEVEL):
+    """You can log to a file using the fn parameter, or make the output
+    more or less verbose by setting level to logging.DEBUG, logging.INFO,
+    logging.WARNING, or logging.ERROR. A fn argument can also be passed
+    to store the log file"""
+    logging.basicConfig(filename=fn, level=level)
     return
 
 
@@ -80,6 +91,10 @@ def save_results():
 
 
 def clean_log():
+    """Remove all log files"""
+    log_files = glob.glob('*_LOG_*')
+    for log in log_files:
+        os.remove(log)
     return
 
 
@@ -87,7 +102,14 @@ def view_results_movie():
     return
 
 
-def main():
+def main(log=LOG):
+    # Set up logger if desired
+    if log:
+        set_up_logger()
+
+    # Clean up logger if necessary
+    if log:
+        clean_log()
     return
 
 
