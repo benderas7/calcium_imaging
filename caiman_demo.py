@@ -52,7 +52,7 @@ METHOD_INIT = 'greedy_roi'  # initialization method (if analyzing dendritic
 SSUB = 1  # spatial subsampling during initialization
 TSUB = 1  # temporal subsampling during intialization
 
-# parameters for component evaluation
+# Parameters for component evaluation
 MIN_SNR = 2.0  # signal to noise ratio for accepting a component
 RVAL_THR = 0.85  # space correlation threshold for accepting a component
 CNN_THR = 0.99  # threshold for CNN based classifier
@@ -120,8 +120,28 @@ def set_up_local_cluster(backend='local', n_processes=None,
     return c, dview, n_processes
 
 
-def motion_corr():
-    return
+def motion_corr(fnames, dview, opts, disp_movie=DISP_MOVIE):
+    """Perform motion correction"""
+    # Create a motion correction object with the parameters specified. Note
+    # that the file is not loaded in memory
+    mc = MotionCorrect(fnames, dview=dview, **opts.get_group('motion'))
+
+    # Run piecewise-rigid motion correction using NoRMCorre
+    mc.motion_correct(save_movie=True)
+    m_els = cm.load(mc.fname_tot_els)
+
+    # Determine maximum shift to be used for trimming against NaNs
+    border_to_0 = 0 if mc.border_nan is 'copy' else mc.border_to_0
+
+    # Compare with original movie
+    if disp_movie:
+        m_orig = cm.load_movie_chain(fnames)
+        ds_ratio = 0.2
+        cm.concatenate(
+            [m_orig.resize(1, 1, ds_ratio) - mc.min_mov * mc.nonneg_movie,
+             m_els.resize(1, 1, ds_ratio)], axis=2).play(
+            fr=60, gain=15, magnification=2, offset=0)  # press q to exit
+    return mc, border_to_0
 
 
 def mem_mapping():
@@ -192,7 +212,10 @@ def main(log=LOG, data_dir=DATA_DIR, disp_movie=DISP_MOVIE):
     opts = set_opts(fnames)
 
     # Configure local cluster
-    set_up_local_cluster()
+    c, dview, n_processes = set_up_local_cluster()
+
+    # Perform motion correction
+    mc, border_to_0 = motion_corr(fnames, dview, opts)
 
     # Clean up logger if necessary
     if log:
