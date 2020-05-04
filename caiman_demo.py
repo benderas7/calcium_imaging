@@ -22,7 +22,7 @@ LOG_FN = '/tmp/caiman.log'
 LOG_LEVEL = logging.WARNING
 
 # Data and data display parameters
-DATA_DIR = 'data/N.01.01'
+VIDEO_FN = 'CaImAn/example_movies/demoMovie.tif'
 DISP_MOVIE = True
 
 # Dataset dependent parameters
@@ -58,8 +58,6 @@ RVAL_THR = 0.85  # space correlation threshold for accepting a component
 CNN_THR = 0.99  # threshold for CNN based classifier
 CNN_LOWEST = 0.1  # neurons with cnn probability lower than this value are
 # rejected
-
-
 ######
 
 
@@ -196,13 +194,13 @@ def view_results_movie():
     return
 
 
-def main(log=LOG, data_dir=DATA_DIR, disp_movie=DISP_MOVIE):
+def main(log=LOG, video_fn=VIDEO_FN, disp_movie=DISP_MOVIE):
     # Set up logger if desired
     if log:
         set_up_logger()
 
-    # Get files
-    fnames = ['{}/{}'.format(data_dir, f) for f in os.listdir(data_dir)]
+    # Get video for processing
+    fnames = [video_fn]
 
     # Display movie if wanted
     if disp_movie:
