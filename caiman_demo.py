@@ -24,6 +24,7 @@ LOG_LEVEL = logging.WARNING
 # Data and data display parameters
 VIDEO_FN = 'CaImAn/example_movies/demoMovie.tif'
 DISP_MOVIE = True
+SAVE_RESULTS_DIR = '.'
 
 # Dataset dependent parameters
 FR = 30  # imaging rate in frames per second
@@ -217,22 +218,29 @@ def comp_eval(cnm, images, dview, cn):
             img=cn, idx=cnm.estimates.idx_components_bad)
     else:
         print('No components were rejected.')
-    return cnm
-
-
-def extract_df_over_f():
     return
 
 
-def sel_hq_comps():
+def extract_df_over_f(cnm, quantile_min=8, frames_window=250):
+    cnm.estimates.detrend_df_f(
+        quantileMin=quantile_min, frames_window=frames_window)
     return
 
 
-def disp_results():
+def sel_hq_comps(cnm):
+    """Select only high quality components."""
+    cnm.estimates.select_components(use_object=True)
     return
 
 
-def save_results():
+def disp_results(cnm, cn, color='red'):
+    """Display final results."""
+    cnm.estimates.nb_view_components(img=cn, denoised_color=color)
+    return
+
+
+def save_results(cnm, save_dir):
+    cnm.save(os.path.join(save_dir, 'analysis_results.hdf5'))
     return
 
 
@@ -244,11 +252,14 @@ def clean_log():
     return
 
 
-def view_results_movie():
+def view_results_movie(cnm, images, border_to_0):
+    cnm.estimates.play_movie(images, q_max=99.9, gain_res=2, magnification=2,
+                             bpx=border_to_0, include_bck=False)
     return
 
 
-def main(log=LOG, video_fn=VIDEO_FN, disp_movie=DISP_MOVIE):
+def main(log=LOG, video_fn=VIDEO_FN, disp_movie=DISP_MOVIE,
+         save_results_dir=SAVE_RESULTS_DIR):
     # Set up logger if desired
     if log:
         set_up_logger()
@@ -286,11 +297,31 @@ def main(log=LOG, video_fn=VIDEO_FN, disp_movie=DISP_MOVIE):
     cnm2 = rerun_cnmf(cnm, images, dview)
 
     # Evaluate components
-    cnm2 = comp_eval(cnm2, images, dview, cn)
+    comp_eval(cnm2, images, dview, cn)
+
+    # Extract dF/F
+    extract_df_over_f(cnm2)
+
+    # Select only high quality components
+    sel_hq_comps(cnm2)
+
+    # Display final results
+    disp_results(cnm2, cn)
+
+    # Save results if specified
+    if save_results_dir:
+        save_results(cnm2, save_results_dir)
+
+    # Stop cluster
+    cm.stop_server(dview=dview)
 
     # Clean up logger if necessary
     if log:
         clean_log()
+
+    # View results movie if wanted
+    if disp_movie:
+        view_results_movie(cnm2, images, border_to_0)
     return
 
 
