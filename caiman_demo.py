@@ -178,7 +178,14 @@ def run_pipeline(n_processes, opts, dview, do_mc=True):
     return
 
 
-def inspect_results():
+def inspect_results(images, cnm):
+    """Inspect results by plotting contours of identified compoenntts
+    against correlation image. The results of the algorithm are stored in
+    the object cnm.estimates."""
+    # Plot contours of found components
+    cn = cm.local_correlations(images.transpose(1, 2, 0))
+    cn[np.isnan(cn)] = 0
+    cnm.estimates.plot_contours_nb(img=cn)
     return
 
 
@@ -248,6 +255,9 @@ def main(log=LOG, video_fn=VIDEO_FN, disp_movie=DISP_MOVIE):
 
     # Run CNMF on patches in parallel
     cnm = run_cnmf(n_processes, opts, dview, images)
+
+    # Inspect results
+    inspect_results(images, cnm)
 
     # Clean up logger if necessary
     if log:
