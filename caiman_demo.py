@@ -186,15 +186,38 @@ def inspect_results(images, cnm):
     cn = cm.local_correlations(images.transpose(1, 2, 0))
     cn[np.isnan(cn)] = 0
     cnm.estimates.plot_contours_nb(img=cn)
-    return
+    return cnm, cn
 
 
-def rerun_cnmf():
-    return
+def rerun_cnmf(cnm, images, dview):
+    """Re-run CNMF algorithm seeded on just the selected components from the
+    previous step. Components rejected on the previous  step will not be
+    recovered here, so be careful."""
+    # Re-run CNMF on accepted patches to refine and perform deconvolution
+    cnm2 = cnm.refit(images, dview=dview)
+    return cnm2
 
 
-def comp_eval():
-    return
+def comp_eval(cnm, images, dview, cn):
+    """The processing in patches creates several spurious components. These are
+    filtered out by evaluating each component using three different criteria:
+    (1) the shape of each component must be correlated with the data at the
+    corresponding location within the FOV; (2) a minimum peak SNR is required
+    over the length of a transient; (3) each shape passes a CNN based
+    classifier."""
+    cnm.estimates.evaluate_components(images, cnm.params, dview=dview)
+
+    # Plot contours of selected and rejected components
+    cnm.estimates.plot_contours_nb(img=cn, idx=cnm.estimates.idx_components)
+
+    # View traces of accepted and rejected components
+    cnm.estimates.nb_view_components(img=cn, idx=cnm.estimates.idx_components)
+    if len(cnm.estimates.idx_components_bad) > 0:
+        cnm.estimates.nb_view_components(
+            img=cn, idx=cnm.estimates.idx_components_bad)
+    else:
+        print('No components were rejected.')
+    return cnm
 
 
 def extract_df_over_f():
@@ -257,7 +280,13 @@ def main(log=LOG, video_fn=VIDEO_FN, disp_movie=DISP_MOVIE):
     cnm = run_cnmf(n_processes, opts, dview, images)
 
     # Inspect results
-    inspect_results(images, cnm)
+    cnm, cn = inspect_results(images, cnm)
+
+    # Re-run CNMF on full FOV
+    cnm2 = rerun_cnmf(cnm, images, dview)
+
+    # Evaluate components
+    cnm2 = comp_eval(cnm2, images, dview, cn)
 
     # Clean up logger if necessary
     if log:
