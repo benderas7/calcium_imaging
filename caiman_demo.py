@@ -156,11 +156,25 @@ def mem_mapping(mc, border_to_0, dview):
     return images
 
 
-def run_cnmf():
-    return
+def run_cnmf(n_processes, opts, dview, images):
+    """The FOV is split is different overlapping patches that are subsequently
+    processed in parallel by the CNMF algorithm. The results from all the
+    patches are merged with special attention to idendtified components on the
+    border. The results are then refined by additional CNMF iterations."""
+    # First extract spatial and temporal components on patches and combine them
+    # for this step deconvolution is turned off (p=0). If you want to have
+    # deconvolution within each patch change params.patch['p_patch'] to a
+    # nonzero value
+    cnm = cnmf.CNMF(n_processes, params=opts, dview=dview)
+    cnm = cnm.fit(images)
+    return cnm
 
 
-def run_pipeline():
+def run_pipeline(n_processes, opts, dview, do_mc=True):
+    """Run the combined steps of motion correction, memory mapping, and cnmf
+    fitting in one step."""
+    cnm1 = cnmf.CNMF(n_processes, params=opts, dview=dview)
+    cnm1.fit_file(motion_correct=do_mc)
     return
 
 
@@ -226,11 +240,14 @@ def main(log=LOG, video_fn=VIDEO_FN, disp_movie=DISP_MOVIE):
     mc, border_to_0 = motion_corr(fnames, dview, opts)
 
     # Perform memory mapping
-    mem_mapping(mc, border_to_0, dview)
+    images = mem_mapping(mc, border_to_0, dview)
 
     # Restart cluster to clean up memory
     cm.stop_server(dview=dview)
     c, dview, n_processes = set_up_local_cluster()
+
+    # Run CNMF on patches in parallel
+    cnm = run_cnmf(n_processes, opts, dview, images)
 
     # Clean up logger if necessary
     if log:
