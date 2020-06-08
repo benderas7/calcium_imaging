@@ -142,8 +142,18 @@ def motion_corr(fnames, dview, opts, disp_movie=DISP_MOVIE):
     return mc, border_to_0
 
 
-def mem_mapping():
-    return
+def mem_mapping(mc, border_to_0, dview):
+    """memory maps the file in order 'C' and then loads the new memory mapped
+    file. The saved files from motion correction are memory mapped files stored
+    in 'F' order. Their paths are stored in mc.mmap_file."""
+    # Memory map the file in order 'C', excluding borders
+    fname_new = cm.save_memmap(mc.mmap_file, base_name='memmap_', order='C',
+                               border_to_0=border_to_0, dview=dview)
+
+    # Load the file with framees in python format (T x X x Y)
+    yr, dims, t = cm.load_memmap(fname_new)
+    images = np.reshape(yr.T, [t] + list(dims), order='F')
+    return images
 
 
 def run_cnmf():
@@ -214,6 +224,13 @@ def main(log=LOG, video_fn=VIDEO_FN, disp_movie=DISP_MOVIE):
 
     # Perform motion correction
     mc, border_to_0 = motion_corr(fnames, dview, opts)
+
+    # Perform memory mapping
+    mem_mapping(mc, border_to_0, dview)
+
+    # Restart cluster to clean up memory
+    cm.stop_server(dview=dview)
+    c, dview, n_processes = set_up_local_cluster()
 
     # Clean up logger if necessary
     if log:
