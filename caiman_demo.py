@@ -1,20 +1,14 @@
 """Largely based off of CaImAn's demo_pipeline.ipynb found here:
 https://github.com/flatironinstitute/CaImAn/blob/master/demos/notebooks"""
 # Import necessary modules
-import bokeh.plotting as bpl
-import cv2
 import glob
 import logging
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import caiman as cm
 from caiman.motion_correction import MotionCorrect
 from caiman.source_extraction.cnmf import cnmf as cnmf
 from caiman.source_extraction.cnmf import params as params
-from caiman.utils.utils import download_demo
-from caiman.utils.visualization import plot_contours, nb_view_patches, \
-    nb_plot_contour
 
 # Logging parameters
 LOG = True
