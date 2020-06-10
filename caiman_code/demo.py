@@ -1,5 +1,3 @@
-"""Largely based off of CaImAn's demo_pipeline.ipynb found here:
-https://github.com/flatironinstitute/CaImAn/blob/master/demos/notebooks"""
 # Import necessary modules
 import caiman_code.funcs
 import logging
