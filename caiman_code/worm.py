@@ -1,0 +1,14 @@
+# Import necessary modules
+from caiman_code import demo
+
+# Set constants
+DATA_FILE = '../data/NeuroPAL/11.25.19/worm3_gcamp_Out/worm3_gcamp_Out_t001z01_ORG.tif'
+
+
+def main(file=DATA_FILE):
+    demo.caiman_pipeline(video_fn=file)
+    return
+
+
+if __name__ == '__main__':
+    main()

@@ -18,7 +18,7 @@ LOG_LEVEL = logging.WARNING
 # Data and data display parameters
 VIDEO_FN = 'CaImAn/example_movies/demoMovie.tif'
 DISP_MOVIE = True
-SAVE_RESULTS_DIR = '.'
+SAVE_RESULTS_DIR = '..'
 
 # Dataset dependent parameters
 FR = 30  # imaging rate in frames per second
@@ -70,6 +70,7 @@ def play_movie(fnames, ds_ratio=0.2, q_max=99.5, fr=30, mag=2):
     in general is not needed by the pipeline. Displaying the movie uses the
     OpenCV library. Press q to close the video panel."""
     m_orig = cm.load_movie_chain(fnames)
+    print(m_orig.shape)
     m_orig.resize(1, 1, ds_ratio).play(q_max=q_max, fr=fr, magnification=mag)
     return
 
@@ -252,8 +253,8 @@ def view_results_movie(cnm, images, border_to_0):
     return
 
 
-def main(log=LOG, video_fn=VIDEO_FN, disp_movie=DISP_MOVIE,
-         save_results_dir=SAVE_RESULTS_DIR):
+def caiman_pipeline(log=LOG, video_fn=VIDEO_FN, disp_movie=DISP_MOVIE,
+                    save_results_dir=SAVE_RESULTS_DIR):
     # Set up logger if desired
     if log:
         set_up_logger()
@@ -320,4 +321,4 @@ def main(log=LOG, video_fn=VIDEO_FN, disp_movie=DISP_MOVIE,
 
 
 if __name__ == '__main__':
-    main()
+    caiman_pipeline()
