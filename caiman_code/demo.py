@@ -1,14 +1,8 @@
 """Largely based off of CaImAn's demo_pipeline.ipynb found here:
 https://github.com/flatironinstitute/CaImAn/blob/master/demos/notebooks"""
 # Import necessary modules
-import glob
+import caiman_code.funcs
 import logging
-import numpy as np
-import os
-import caiman as cm
-from caiman.motion_correction import MotionCorrect
-from caiman.source_extraction.cnmf import cnmf as cnmf
-from caiman.source_extraction.cnmf import params as params
 
 # Logging parameters
 LOG = True
@@ -18,7 +12,7 @@ LOG_LEVEL = logging.WARNING
 # Data and data display parameters
 VIDEO_FN = 'CaImAn/example_movies/demoMovie.tif'
 DISP_MOVIE = True
-SAVE_RESULTS_DIR = '..'
+SAVE_RESULTS_DIR = '.'
 
 # Dataset dependent parameters
 FR = 30  # imaging rate in frames per second
@@ -56,5 +50,13 @@ CNN_LOWEST = 0.1  # neurons with cnn probability lower than this value are
 ######
 
 
+def run_demo(video_fn=VIDEO_FN, log=LOG, log_fn=LOG_FN, log_level=LOG_LEVEL,
+             fr=FR, decay_time=DECAY_TIME, disp_movie=DISP_MOVIE,
+             save_results_dir=SAVE_RESULTS_DIR):
+    caiman_code.funcs.pipeline(video_fn, log, log_fn, log_level, fr,
+                               decay_time, disp_movie, save_results_dir)
+    return
+
+
 if __name__ == '__main__':
-    caiman_pipeline()
+    run_demo()
