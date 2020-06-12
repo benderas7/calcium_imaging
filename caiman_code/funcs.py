@@ -11,10 +11,10 @@ from caiman.source_extraction.cnmf import cnmf as cnmf
 from caiman.source_extraction.cnmf import params as params
 
 # Motion correction parameters
-STRIDES = (48, 48)  # start a new patch for pw-rigid motion correction every
+STRIDES = (96, 96)  # start a new patch for pw-rigid motion correction every
 # x pixels
 OVERLAPS = (24, 24)  # overlap between pathes (size of patch strides+overlaps)
-MAX_SHIFTS = (6, 6)  # maximum allowed rigid shifts (in pixels)
+MAX_SHIFTS = (12, 12)  # maximum allowed rigid shifts (in pixels)
 MAX_DEV_RIGID = 3  # maximum shifts deviation allowed for patch with
 # respect to rigid shifts
 PW_RIGID = True  # flag for performing non-rigid motion correction
@@ -23,11 +23,11 @@ PW_RIGID = True  # flag for performing non-rigid motion correction
 P = 1  # order of the autoregressive system
 GNB = 2  # number of global background components
 MERGE_THR = 0.85  # merging threshold, max correlation allowed
-RF = 15  # half-size of the patches in pixels. e.g., if rf=25, patches are
+RF = 30  # half-size of the patches in pixels. e.g., if rf=25, patches are
 # 50x50
-STRIDE_CNMF = 6  # amount of overlap between the patches in pixels
+STRIDE_CNMF = 12  # amount of overlap between the patches in pixels
 K = 4  # number of components per patch
-GSIG = [4, 4]  # expected half size of neurons in pixels
+GSIG = [8, 8]  # expected half size of neurons in pixels
 METHOD_INIT = 'greedy_roi'  # initialization method (if analyzing dendritic
 # data using 'sparse_nmf')
 SSUB = 1  # spatial subsampling during initialization
@@ -54,7 +54,6 @@ def play_movie(fnames, ds_ratio=0.2, q_max=99.5, fr=30, mag=2):
     in general is not needed by the pipeline. Displaying the movie uses the
     OpenCV library. Press q to close the video panel."""
     m_orig = cm.load_movie_chain(fnames)
-    print(m_orig.shape)
     m_orig.resize(1, 1, ds_ratio).play(q_max=q_max, fr=fr, magnification=mag)
     return
 
