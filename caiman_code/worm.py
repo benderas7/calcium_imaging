@@ -23,10 +23,17 @@ DECAY_TIME = 0.4  # length of a typical transient in seconds
 
 
 def compile_imgs_to_arr(img_dir, t_char='t', z_char='z'):
+    # Determine array file name from img_dir
+    arr_fn = os.path.join(img_dir, '{}.npy'.format(img_dir.split('/')[-1]))
+
+    # Check if array has already been compiled and saved
+    if os.path.exists(arr_fn):
+        return arr_fn
+
     # Make sure video directory is in fact a directory
     assert os.path.isdir(img_dir)
 
-    # Load imagse
+    # Load images
     imgs, t_lst, z_lst = [], [], []
     for fn in [f for f in os.listdir(img_dir) if f.endswith('.tif')]:
         # Parse filename to get t and z - *very specific to worm files*
@@ -42,7 +49,11 @@ def compile_imgs_to_arr(img_dir, t_char='t', z_char='z'):
     for img, t, z in zip(imgs, t_lst, z_lst):
         assert np.sum(arr[:, :, z-1, t-1]) == 0
         arr[:, :, z-1, t-1] = img
-    return arr
+
+    # Save array
+    np.save(arr_fn, arr)
+    print('Saved array with shape: {}'.format(arr.shape))
+    return arr_fn
 
 
 def run(img_dir=IMG_DIR, log=LOG, log_fn=LOG_FN, log_level=LOG_LEVEL,
