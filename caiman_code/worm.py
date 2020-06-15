@@ -26,17 +26,22 @@ def compile_imgs_to_arr(img_dir, t_char='t', z_char='z'):
     # Make sure video directory is in fact a directory
     assert os.path.isdir(img_dir)
 
-    # Compile images
+    # Load imagse
+    imgs, t_lst, z_lst = [], [], []
     for fn in [f for f in os.listdir(img_dir) if f.endswith('.tif')]:
         # Parse filename to get t and z - *very specific to worm files*
         tz_str = fn.split('_')[3]
-        t = re.findall('\d+', tz_str[tz_str.index(t_char):])[0]
-        z = re.findall('\d+', tz_str[tz_str.index(z_char):])[0]
+        t_lst.append(int(re.findall('\d+', tz_str[tz_str.index(t_char):])[0]))
+        z_lst.append(int(re.findall('\d+', tz_str[tz_str.index(z_char):])[0]))
 
         # Load image
-        np.array(Image.open(os.path.join(img_dir, fn)))
+        imgs.append(np.array(Image.open(os.path.join(img_dir, fn))))
 
-    arr = []
+    # Compile images into array
+    arr = np.zeros((*imgs[0].shape, len(set(z_lst)), len(set(t_lst))))
+    for img, t, z in zip(imgs, t_lst, z_lst):
+        assert np.sum(arr[:, :, z-1, t-1]) == 0
+        arr[:, :, z-1, t-1] = img
     return arr
 
 
