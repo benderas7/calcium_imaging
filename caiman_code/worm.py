@@ -12,7 +12,7 @@ LOG_FN = '/tmp/caiman.log'
 LOG_LEVEL = logging.WARNING
 
 # Data and data display parameters
-IMG_DIR = 'data/NeuroPAL/11.25.19/worm3_gcamp_Out'
+IMG_DIR = '/Users/benderas/NeuroPAL/11.25.19/worm3_gcamp_Out'
 DISP_MOVIE = True
 SAVE_RESULTS_DIR = '.'
 
