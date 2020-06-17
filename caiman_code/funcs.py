@@ -177,7 +177,7 @@ def rerun_cnmf(cnm, images, dview):
     return cnm2
 
 
-def comp_eval(cnm, images, dview, cn):
+def comp_eval(cnm, images, dview, cn, is_3d=False):
     """The processing in patches creates several spurious components. These are
     filtered out by evaluating each component using three different criteria:
     (1) the shape of each component must be correlated with the data at the
@@ -190,10 +190,19 @@ def comp_eval(cnm, images, dview, cn):
     cnm.estimates.plot_contours_nb(img=cn, idx=cnm.estimates.idx_components)
 
     # View traces of accepted and rejected components
-    cnm.estimates.nb_view_components(img=cn, idx=cnm.estimates.idx_components)
-    if len(cnm.estimates.idx_components_bad) > 0:
+    if is_3d:
+        cnm.estimates.nb_view_components_3d(
+            img=cn, idx=cnm.estimates.idx_components)
+    else:
         cnm.estimates.nb_view_components(
-            img=cn, idx=cnm.estimates.idx_components_bad)
+            img=cn, idx=cnm.estimates.idx_components)
+    if len(cnm.estimates.idx_components_bad) > 0:
+        if is_3d:
+            cnm.estimates.nb_view_components_3d(
+                img=cn, idx=cnm.estimates.idx_components_bad)
+        else:
+            cnm.estimates.nb_view_components(
+                img=cn, idx=cnm.estimates.idx_components_bad)
     else:
         print('No components were rejected.')
     return
@@ -211,8 +220,11 @@ def sel_hq_comps(cnm):
     return
 
 
-def disp_results(cnm, cn, color='red'):
+def disp_results(cnm, cn, color='red', is_3d=False):
     """Display final results."""
+    if is_3d:
+        cnm.estimates.nb_view_components_3d(img=cn, denoised_color=color)
+        return
     cnm.estimates.nb_view_components(img=cn, denoised_color=color)
     return
 
@@ -237,7 +249,7 @@ def view_results_movie(cnm, images, border_to_0):
 
 
 def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, disp_movie,
-             save_results_dir, defined_opts=None):
+             save_results_dir, defined_opts=None, is_3d=False):
     # Set up logger if desired
     if log:
         set_up_logger(log_fn, log_level)
@@ -246,7 +258,7 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, disp_movie,
     fnames = [video_fn]
 
     # Display movie if wanted
-    if disp_movie:
+    if disp_movie and not is_3d:
         play_movie(fnames)
 
     # Set options for extraction
@@ -277,7 +289,7 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, disp_movie,
     cnm2 = rerun_cnmf(cnm, images, dview)
 
     # Evaluate components
-    comp_eval(cnm2, images, dview, cn)
+    comp_eval(cnm2, images, dview, cn, is_3d=is_3d)
 
     # Extract dF/F
     extract_df_over_f(cnm2)
@@ -286,7 +298,7 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, disp_movie,
     sel_hq_comps(cnm2)
 
     # Display final results
-    disp_results(cnm2, cn)
+    disp_results(cnm2, cn, is_3d=is_3d)
 
     # Save results if specified
     if save_results_dir:
@@ -300,6 +312,6 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, disp_movie,
         clean_log()
 
     # View results movie if wanted
-    if disp_movie:
+    if disp_movie and not is_3d:
         view_results_movie(cnm2, images, border_to_0)
     return
