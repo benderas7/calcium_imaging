@@ -5,6 +5,7 @@ import os
 import re
 from PIL import Image
 import numpy as np
+from skimage.external.tifffile import imsave
 
 # Logging parameters
 LOG = True
@@ -13,10 +14,10 @@ LOG_LEVEL = logging.WARNING
 
 # Data and data display parameters
 IMG_DIR = '/Users/benderas/NeuroPAL/11.25.19/worm3_gcamp_Out'
-DISP_MOVIE = True
 SAVE_RESULTS_DIR = '.'
 
 # Dataset dependent parameters
+IS_3D = True
 FR = 30  # imaging rate in frames per second
 DECAY_TIME = 0.4  # length of a typical transient in seconds
 ######
@@ -57,14 +58,14 @@ def compile_imgs_to_arr(img_dir, t_char='t', z_char='z'):
 
 
 def run(img_dir=IMG_DIR, log=LOG, log_fn=LOG_FN, log_level=LOG_LEVEL,
-        fr=FR, decay_time=DECAY_TIME, disp_movie=DISP_MOVIE,
-        save_results_dir=SAVE_RESULTS_DIR):
+        fr=FR, decay_time=DECAY_TIME, save_results_dir=SAVE_RESULTS_DIR,
+        is_3d=IS_3D):
     # Compile images into array
     video_fn = compile_imgs_to_arr(img_dir)
 
     # Run pipeline
     caiman_code.funcs.pipeline(video_fn, log, log_fn, log_level, fr,
-                               decay_time, disp_movie, save_results_dir)
+                               decay_time, save_results_dir, is_3d=is_3d)
     return
 
 

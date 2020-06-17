@@ -248,8 +248,9 @@ def view_results_movie(cnm, images, border_to_0):
     return
 
 
-def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, disp_movie,
-             save_results_dir, defined_opts=None, is_3d=False):
+def pipeline(video_fn, log, log_fn, log_level, fr, decay_time,
+             save_results_dir, disp_movie=True, defined_opts=None,
+             is_3d=False):
     # Set up logger if desired
     if log:
         set_up_logger(log_fn, log_level)

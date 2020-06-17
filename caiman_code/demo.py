@@ -34,8 +34,8 @@ def run_demo(video_fn=VIDEO_FN, log=LOG, log_fn=LOG_FN, log_level=LOG_LEVEL,
              fr=FR, decay_time=DECAY_TIME, disp_movie=DISP_MOVIE,
              save_results_dir=SAVE_RESULTS_DIR, defined_opts=None):
     caiman_code.funcs.pipeline(
-        video_fn, log, log_fn, log_level, fr, decay_time, disp_movie,
-        save_results_dir, defined_opts=defined_opts)
+        video_fn, log, log_fn, log_level, fr, decay_time,
+        save_results_dir, disp_movie=disp_movie, defined_opts=defined_opts)
     return
 
 
