@@ -45,10 +45,10 @@ def compile_imgs_to_arr(img_dir, t_char='t', z_char='z'):
         imgs.append(np.array(Image.open(os.path.join(img_dir, fn))))
 
     # Compile images into array
-    arr = np.zeros((*imgs[0].shape, len(set(z_lst)), len(set(t_lst))))
+    arr = np.zeros((len(set(t_lst)), *imgs[0].shape, len(set(z_lst)), ))
     for img, t, z in zip(imgs, t_lst, z_lst):
-        assert np.sum(arr[:, :, z-1, t-1]) == 0
-        arr[:, :, z-1, t-1] = img
+        assert np.sum(arr[t-1, :, :, z-1]) == 0
+        arr[t-1, :, :, z-1] = img
 
     # Save array
     np.save(arr_fn, arr)
