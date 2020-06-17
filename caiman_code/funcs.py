@@ -207,9 +207,8 @@ def view_results_movie(cnm, images, border_to_0):
     return
 
 
-def pipeline(video_fn, log, log_fn, log_level, fr, decay_time,
-             save_results_dir, disp_movie=True, defined_opts=None,
-             is_3d=False):
+def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
+             save_results_dir, disp_movie=True, is_3d=False):
     # Set up logger if desired
     if log:
         set_up_logger(log_fn, log_level)
@@ -222,9 +221,7 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time,
         play_movie(fnames)
 
     # Set options for extraction
-    if defined_opts is None:
-        defined_opts = {}
-    opts = set_opts(fnames, fr, decay_time, **defined_opts)
+    opts = set_opts(fnames, fr, decay_time, opts_dict)
 
     # Configure local cluster
     c, dview, n_processes = set_up_local_cluster()
