@@ -25,7 +25,7 @@ DECAY_TIME = 0.4  # length of a typical transient in seconds
 
 def compile_imgs_to_arr(img_dir, t_char='t', z_char='z'):
     # Determine array file name from img_dir
-    arr_fn = os.path.join(img_dir, '{}.npy'.format(img_dir.split('/')[-1]))
+    arr_fn = os.path.join(img_dir, '{}.tif'.format(img_dir.split('/')[-1]))
 
     # Check if array has already been compiled and saved
     if os.path.exists(arr_fn):
@@ -52,8 +52,8 @@ def compile_imgs_to_arr(img_dir, t_char='t', z_char='z'):
         arr[t-1, :, :, z-1] = img
 
     # Save array
-    np.save(arr_fn, arr)
-    print('Saved array with shape: {}'.format(arr.shape))
+    imsave(arr_fn, arr)
+    print('Saved array with shape: {} as {}'.format(arr.shape, arr_fn))
     return arr_fn
 
 
