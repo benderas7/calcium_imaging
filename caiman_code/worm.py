@@ -5,7 +5,7 @@ import os
 import re
 from PIL import Image
 import numpy as np
-from skimage.external.tifffile import imsave
+from skimage.external.tifffile import imsave, imread
 
 # Logging parameters
 LOG = True
@@ -20,6 +20,29 @@ SAVE_RESULTS_DIR = '.'
 IS_3D = True
 FR = 30  # imaging rate in frames per second
 DECAY_TIME = 0.4  # length of a typical transient in seconds
+
+DEFINED_OPTS = {
+    # Motion correction parameters
+    'is3D': True,
+    'strides': (20, 20, 2),
+    'niter_rig': 1,
+    'max_shifts': (10, 10, 1),
+    'max_deviation_rigid': 3,
+    'upsample_factor_grid': 50,
+    'border_nan': False,
+
+    # CNMF parameters
+    'method_exp': 'dilate',
+    'maxIter': 15,
+    # 'deconv_method': 'constrained_foopsi',
+    'ITER': 2,
+    'fudge_factor': 0.98,
+    'merge_thr': 0.90,
+    'gSig': (3, 3, 2),
+    'nb': 1,
+    'include_noise': False,
+    'p': 0
+                }
 ######
 
 
@@ -29,7 +52,8 @@ def compile_imgs_to_arr(img_dir, t_char='t', z_char='z'):
 
     # Check if array has already been compiled and saved
     if os.path.exists(arr_fn):
-        return arr_fn
+        arr = imread(arr_fn)
+        return arr_fn, arr.shape
 
     # Make sure video directory is in fact a directory
     assert os.path.isdir(img_dir)
@@ -46,7 +70,7 @@ def compile_imgs_to_arr(img_dir, t_char='t', z_char='z'):
         imgs.append(np.array(Image.open(os.path.join(img_dir, fn))))
 
     # Compile images into array
-    arr = np.zeros((len(set(t_lst)), *imgs[0].shape, len(set(z_lst)), ))
+    arr = np.zeros((len(set(t_lst)), *imgs[0].shape, len(set(z_lst))))
     for img, t, z in zip(imgs, t_lst, z_lst):
         assert np.sum(arr[t-1, :, :, z-1]) == 0
         arr[t-1, :, :, z-1] = img
@@ -54,20 +78,21 @@ def compile_imgs_to_arr(img_dir, t_char='t', z_char='z'):
     # Save array
     imsave(arr_fn, arr)
     print('Saved array with shape: {} as {}'.format(arr.shape, arr_fn))
-    return arr_fn
+    return arr_fn, arr.shape
 
 
-def run(img_dir=IMG_DIR, log=LOG, log_fn=LOG_FN, log_level=LOG_LEVEL,
-        fr=FR, decay_time=DECAY_TIME, save_results_dir=SAVE_RESULTS_DIR,
-        is_3d=IS_3D):
+def run(opts_dict, img_dir=IMG_DIR, log=LOG, log_fn=LOG_FN,
+        log_level=LOG_LEVEL, fr=FR, decay_time=DECAY_TIME,
+        save_results_dir=SAVE_RESULTS_DIR, is_3d=IS_3D):
     # Compile images into array
-    video_fn = compile_imgs_to_arr(img_dir)
-
+    video_fn, arr_shape = compile_imgs_to_arr(img_dir)
+    print(arr_shape)
     # Run pipeline
-    caiman_code.funcs.pipeline(video_fn, log, log_fn, log_level, fr,
-                               decay_time, save_results_dir, is_3d=is_3d)
+    caiman_code.funcs.pipeline(
+        video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
+        save_results_dir, is_3d=is_3d)
     return
 
 
 if __name__ == '__main__':
-    run()
+    run(DEFINED_OPTS)
