@@ -64,13 +64,13 @@ def motion_corr(fnames, dview, opts, disp_movie, is_3d=False):
 
     # Run piecewise-rigid motion correction using NoRMCorre
     mc.motion_correct(save_movie=True)
-    m_els = cm.load(mc.fname_tot_els)
 
     # Determine maximum shift to be used for trimming against NaNs
     border_to_0 = 0 if mc.border_nan is 'copy' else mc.border_to_0
 
     # Compare with original movie
     if disp_movie and not is_3d:
+        m_els = cm.load(mc.fname_tot_els)
         m_orig = cm.load_movie_chain(fnames)
         ds_ratio = 0.2
         cm.concatenate(
@@ -210,6 +210,7 @@ def view_results_movie(cnm, images, border_to_0):
 
 def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
              save_results_dir, disp_movie=True, is_3d=False):
+    # TO-DO: Print time taken
     # Set up logger if desired
     if log:
         set_up_logger(log_fn, log_level)
