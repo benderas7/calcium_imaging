@@ -56,7 +56,7 @@ def set_up_local_cluster(backend='local', n_processes=None,
     return c, dview, n_processes
 
 
-def motion_corr(fnames, dview, opts, disp_movie):
+def motion_corr(fnames, dview, opts, disp_movie, is_3d=False):
     """Perform motion correction"""
     # Create a motion correction object with the parameters specified. Note
     # that the file is not loaded in memory
@@ -70,7 +70,7 @@ def motion_corr(fnames, dview, opts, disp_movie):
     border_to_0 = 0 if mc.border_nan is 'copy' else mc.border_to_0
 
     # Compare with original movie
-    if disp_movie:
+    if disp_movie and not is_3d:
         m_orig = cm.load_movie_chain(fnames)
         ds_ratio = 0.2
         cm.concatenate(
@@ -80,13 +80,14 @@ def motion_corr(fnames, dview, opts, disp_movie):
     return mc, border_to_0
 
 
-def mem_mapping(mc, border_to_0, dview):
+def mem_mapping(mc, border_to_0, dview, is_3d=False):
     """memory maps the file in order 'C' and then loads the new memory mapped
     file. The saved files from motion correction are memory mapped files stored
     in 'F' order. Their paths are stored in mc.mmap_file."""
     # Memory map the file in order 'C', excluding borders
-    fname_new = cm.save_memmap(mc.mmap_file, base_name='memmap_', order='C',
-                               border_to_0=border_to_0, dview=dview)
+    fname_new = cm.save_memmap(
+        mc.mmap_file, base_name='memmap_', order='C',
+        border_to_0=border_to_0, is_3D=is_3d, dview=dview)
 
     # Load the file with framees in python format (T x X x Y)
     yr, dims, t = cm.load_memmap(fname_new)
@@ -227,10 +228,10 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
     c, dview, n_processes = set_up_local_cluster()
 
     # Perform motion correction
-    mc, border_to_0 = motion_corr(fnames, dview, opts, disp_movie)
+    mc, border_to_0 = motion_corr(fnames, dview, opts, disp_movie, is_3d=is_3d)
 
     # Perform memory mapping
-    images = mem_mapping(mc, border_to_0, dview)
+    images = mem_mapping(mc, border_to_0, dview, is_3d=is_3d)
 
     # Restart cluster to clean up memory
     cm.stop_server(dview=dview)
