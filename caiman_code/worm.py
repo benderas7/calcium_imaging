@@ -5,7 +5,7 @@ import os
 import re
 from PIL import Image
 import numpy as np
-from skimage.external.tifffile import imsave, imread
+import h5py
 
 # Logging parameters
 LOG = True
@@ -48,11 +48,13 @@ DEFINED_OPTS = {
 
 def compile_imgs_to_arr(img_dir, t_char='t', z_char='z'):
     # Determine array file name from img_dir
-    arr_fn = os.path.join(img_dir, '{}.tif'.format(img_dir.split('/')[-1]))
+    arr_fn = os.path.join(img_dir, '{}.h5'.format(img_dir.split('/')[-1]))
 
     # Check if array has already been compiled and saved
     if os.path.exists(arr_fn):
-        arr = imread(arr_fn)
+        h5f = h5py.File(arr_fn, 'r')
+        arr = h5f['data'][:]
+        h5f.close()
         return arr_fn, arr.shape
 
     # Make sure video directory is in fact a directory
@@ -76,7 +78,9 @@ def compile_imgs_to_arr(img_dir, t_char='t', z_char='z'):
         arr[t-1, :, :, z-1] = img
 
     # Save array
-    imsave(arr_fn, arr)
+    h5f = h5py.File(arr_fn, 'w')
+    h5f.create_dataset('data', data=arr)
+    h5f.close()
     print('Saved array with shape: {} as {}'.format(arr.shape, arr_fn))
     return arr_fn, arr.shape
 
@@ -86,7 +90,7 @@ def run(opts_dict, img_dir=IMG_DIR, log=LOG, log_fn=LOG_FN,
         save_results_dir=SAVE_RESULTS_DIR, is_3d=IS_3D):
     # Compile images into array
     video_fn, arr_shape = compile_imgs_to_arr(img_dir)
-    print(arr_shape)
+
     # Run pipeline
     caiman_code.funcs.pipeline(
         video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
