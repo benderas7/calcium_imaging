@@ -109,12 +109,12 @@ def run_cnmf(n_processes, opts, dview, images):
     return cnm
 
 
-def run_pipeline(n_processes, opts, dview, do_mc=True):
+def run_pipeline(n_processes, opts, dview, do_mc=True, do_eval=True):
     """Run the combined steps of motion correction, memory mapping, and cnmf
     fitting in one step."""
     cnm1 = cnmf.CNMF(n_processes, params=opts, dview=dview)
-    cnm1.fit_file(motion_correct=do_mc)
-    return
+    cnm1.fit_file(motion_correct=do_mc, include_eval=do_eval)
+    return cnm1
 
 
 def inspect_results(images, cnm):
@@ -208,8 +208,9 @@ def view_results_movie(cnm, images, border_to_0):
     return
 
 
-def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
-             save_results_dir, disp_movie=True, is_3d=False):
+def pipeline_verbose(
+        video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
+        save_results_dir, disp_movie=True, is_3d=False):
     # TO-DO: Print time taken
     # Set up logger if desired
     if log:
@@ -273,4 +274,36 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
     # View results movie if wanted
     if disp_movie and not is_3d:
         view_results_movie(cnm2, images, border_to_0)
+    return
+
+
+def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
+             save_results_dir, disp_movie=True, is_3d=False):
+    # TO-DO: Print time taken
+    # Set up logger if desired
+    if log:
+        set_up_logger(log_fn, log_level)
+
+    # Get video for processing
+    fnames = [video_fn]
+
+    # Display movie if wanted
+    if disp_movie and not is_3d:
+        play_movie(fnames)
+
+    # Set options for extraction
+    opts = set_opts(fnames, fr, decay_time, opts_dict)
+
+    # Configure local cluster
+    c, dview, n_processes = set_up_local_cluster()
+
+    #
+    cnm2 = run_pipeline(n_processes, opts, dview)
+
+    # Select only high quality components
+    sel_hq_comps(cnm2)
+
+    # Save results if specified
+    if save_results_dir:
+        save_results(cnm2, save_results_dir)
     return
