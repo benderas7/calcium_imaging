@@ -80,6 +80,13 @@ def motion_corr(fnames, dview, opts, disp_movie, is_3d=False):
     return mc, border_to_0
 
 
+def load_memmap(fname_new):
+    # Load the file with framees in python format (T x X x Y)
+    yr, dims, t = cm.load_memmap(fname_new)
+    images = np.reshape(yr.T, [t] + list(dims), order='F')
+    return images
+
+
 def mem_mapping(mc, border_to_0, dview, is_3d=False):
     """memory maps the file in order 'C' and then loads the new memory mapped
     file. The saved files from motion correction are memory mapped files stored
@@ -90,8 +97,7 @@ def mem_mapping(mc, border_to_0, dview, is_3d=False):
         border_to_0=border_to_0, is_3D=is_3d, dview=dview)
 
     # Load the file with framees in python format (T x X x Y)
-    yr, dims, t = cm.load_memmap(fname_new)
-    images = np.reshape(yr.T, [t] + list(dims), order='F')
+    images = load_memmap(fname_new)
     return images
 
 
@@ -109,19 +115,23 @@ def run_cnmf(n_processes, opts, dview, images):
     return cnm
 
 
-def run_pipeline(n_processes, opts, dview, do_mc=True, do_eval=True):
+def run_pipeline(n_processes, opts, dview, do_mc=True):
     """Run the combined steps of motion correction, memory mapping, and cnmf
     fitting in one step."""
     cnm1 = cnmf.CNMF(n_processes, params=opts, dview=dview)
-    cnm1.fit_file(motion_correct=do_mc, include_eval=do_eval)
+    cnm1.fit_file(motion_correct=do_mc)
     return cnm1
 
 
-def inspect_results(images, cnm):
-    """Inspect results by plotting contours of identified compoenntts
+def inspect_results(images, cnm, is_3d=False):
+    """Inspect results by plotting contours of identified components
     against correlation image. The results of the algorithm are stored in
     the object cnm.estimates."""
     # Plot contours of found components
+    if is_3d:
+        cn = cm.local_correlations(images, swap_dim=False)
+        cn[np.isnan(cn)] = 0
+        return cnm, cn
     cn = cm.local_correlations(images.transpose(1, 2, 0))
     cn[np.isnan(cn)] = 0
     cnm.estimates.plot_contours_nb(img=cn)
@@ -208,75 +218,6 @@ def view_results_movie(cnm, images, border_to_0):
     return
 
 
-def pipeline_verbose(
-        video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
-        save_results_dir, disp_movie=True, is_3d=False):
-    # TO-DO: Print time taken
-    # Set up logger if desired
-    if log:
-        set_up_logger(log_fn, log_level)
-
-    # Get video for processing
-    fnames = [video_fn]
-
-    # Display movie if wanted
-    if disp_movie and not is_3d:
-        play_movie(fnames)
-
-    # Set options for extraction
-    opts = set_opts(fnames, fr, decay_time, opts_dict)
-
-    # Configure local cluster
-    c, dview, n_processes = set_up_local_cluster()
-
-    # Perform motion correction
-    mc, border_to_0 = motion_corr(fnames, dview, opts, disp_movie, is_3d=is_3d)
-
-    # Perform memory mapping
-    images = mem_mapping(mc, border_to_0, dview, is_3d=is_3d)
-
-    # Restart cluster to clean up memory
-    cm.stop_server(dview=dview)
-    c, dview, n_processes = set_up_local_cluster()
-
-    # Run CNMF on patches in parallel
-    cnm = run_cnmf(n_processes, opts, dview, images)
-
-    # Inspect results
-    cnm, cn = inspect_results(images, cnm)
-
-    # Re-run CNMF on full FOV
-    cnm2 = rerun_cnmf(cnm, images, dview)
-
-    # Evaluate components
-    comp_eval(cnm2, images, dview, cn, is_3d=is_3d)
-
-    # Extract dF/F
-    extract_df_over_f(cnm2)
-
-    # Select only high quality components
-    sel_hq_comps(cnm2)
-
-    # Display final results
-    disp_results(cnm2, cn, is_3d=is_3d)
-
-    # Save results if specified
-    if save_results_dir:
-        save_results(cnm2, save_results_dir)
-
-    # Stop cluster
-    cm.stop_server(dview=dview)
-
-    # Clean up logger if necessary
-    if log:
-        clean_log()
-
-    # View results movie if wanted
-    if disp_movie and not is_3d:
-        view_results_movie(cnm2, images, border_to_0)
-    return
-
-
 def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
              save_results_dir, disp_movie=True, is_3d=False):
     # TO-DO: Print time taken
@@ -297,8 +238,23 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
     # Configure local cluster
     c, dview, n_processes = set_up_local_cluster()
 
-    #
-    cnm2 = run_pipeline(n_processes, opts, dview)
+    # Do motion correction, memory mapping, and cnmf
+    cnm = run_pipeline(n_processes, opts, dview)
+
+    # Get images from load memmap
+    images = load_memmap(cnm.mmap_file)
+
+    # Inspect results
+    cnm, cn = inspect_results(images, cnm, is_3d=is_3d)
+
+    # Re-run CNMF on full FOV
+    cnm2 = rerun_cnmf(cnm, images, dview)
+
+    # Evaluate components
+    comp_eval(cnm2, images, dview, cn, is_3d=is_3d)
+
+    # Extract dF/F
+    extract_df_over_f(cnm2)
 
     # Select only high quality components
     sel_hq_comps(cnm2)
