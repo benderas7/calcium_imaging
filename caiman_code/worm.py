@@ -16,7 +16,7 @@ LOG_LEVEL = logging.WARNING
 # Data and data display parameters
 IMG_DIR = '/Users/benderas/NeuroPAL/11.25.19/worm3_gcamp_Out'
 SAVE_RESULTS_DIR = '.'
-ARR_FORMAT = '.tif'
+ARR_FORMAT = '.h5'
 
 # Dataset dependent parameters
 IS_3D = True
@@ -55,12 +55,12 @@ def compile_imgs_to_arr(img_dir, arr_format, t_char='t', z_char='z'):
 
     # Check if array has already been compiled and saved
     if os.path.exists(arr_fn):
-        if arr_format is '.h5':
+        if '.h5' in arr_fn:
             h5f = h5py.File(arr_fn, 'r')
             arr = h5f['data'][:]
             h5f.close()
             return arr_fn, arr.shape
-        elif arr_format is '.tif':
+        elif '.tif' in arr_fn:
             arr = imread(arr_fn)
             return arr_fn, arr.shape
 
@@ -104,7 +104,7 @@ def run(opts_dict, img_dir=IMG_DIR, arr_format=ARR_FORMAT, log=LOG,
     video_fn, arr_shape = compile_imgs_to_arr(img_dir, arr_format)
 
     # Run pipeline
-    caiman_code.funcs.pipeline_verbose(
+    caiman_code.funcs.pipeline(
         video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
         save_results_dir, is_3d=is_3d)
     return
