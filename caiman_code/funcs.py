@@ -192,7 +192,7 @@ def sel_hq_comps(cnm):
 def disp_results(cnm, cn, color='red', is_3d=False):
     """Display final results."""
     if is_3d:
-        cnm.estimates.nb_view_components_3d(img=cn, denoised_color=color)
+        cnm.estimates.nb_view_components_3d()
         return
     cnm.estimates.nb_view_components(img=cn, denoised_color=color)
     return
