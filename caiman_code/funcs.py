@@ -156,20 +156,19 @@ def comp_eval(cnm, images, dview, cn, is_3d=False):
     classifier."""
     cnm.estimates.evaluate_components(images, cnm.params, dview=dview)
 
-    # Plot contours of selected and rejected components
-    cnm.estimates.plot_contours_nb(img=cn, idx=cnm.estimates.idx_components)
-
     # View traces of accepted and rejected components
     if is_3d:
-        cnm.estimates.nb_view_components_3d(
-            img=cn, idx=cnm.estimates.idx_components)
+        cnm.estimates.nb_view_components_3d()
     else:
+        # Plot contours of selected and rejected components
+        cnm.estimates.plot_contours_nb(
+            img=cn, idx=cnm.estimates.idx_components)
+
         cnm.estimates.nb_view_components(
             img=cn, idx=cnm.estimates.idx_components)
     if len(cnm.estimates.idx_components_bad) > 0:
         if is_3d:
-            cnm.estimates.nb_view_components_3d(
-                img=cn, idx=cnm.estimates.idx_components_bad)
+            cnm.estimates.nb_view_components_3d()
         else:
             cnm.estimates.nb_view_components(
                 img=cn, idx=cnm.estimates.idx_components_bad)

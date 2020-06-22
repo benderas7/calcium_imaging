@@ -15,7 +15,7 @@ LOG_LEVEL = logging.WARNING
 
 # Data and data display parameters
 IMG_DIR = '/Users/benderas/NeuroPAL/11.25.19/worm3_gcamp_Out'
-SAVE_RESULTS_DIR = '.'
+SAVE_RESULTS_DIR = IMG_DIR
 ARR_FORMAT = '.h5'
 
 # Dataset dependent parameters
@@ -43,7 +43,10 @@ DEFINED_OPTS = {
     'gSig': (3, 3, 2),
     'nb': 1,
     'include_noise': False,
-    'p': 0
+    'p': 0,
+
+    # Component evaluation parameters
+    'use_cnn': False
                 }
 ######
 
