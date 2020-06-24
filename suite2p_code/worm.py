@@ -43,6 +43,10 @@ def compile_imgs_to_arr(img_dir, compiled_dir, arr_format, t_char='t',
     # Make sure video directory is in fact a directory
     assert os.path.isdir(img_dir)
 
+    # Make compiled dir if necessary
+    if not os.path.exists(compiled_dir):
+        os.makedirs(compiled_dir)
+
     # Load images
     imgs, t_lst, z_lst = [], [], []
     files = [f for f in os.listdir(img_dir) if f.endswith('.tif')]
