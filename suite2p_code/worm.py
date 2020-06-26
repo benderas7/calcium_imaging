@@ -81,7 +81,6 @@ def main(img_dir=IMG_DIR, arr_format=ARR_FORMAT, compiled_dir=COMPILED_DIR):
     # Compile images into array
     video_fn, arr_shape = compile_imgs_to_arr(
         img_dir, compiled_dir, arr_format)
-    print(video_fn, arr_shape)
     return
 
 
