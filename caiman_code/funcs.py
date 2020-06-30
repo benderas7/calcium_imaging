@@ -158,7 +158,7 @@ def comp_eval(cnm, images, dview, cn, is_3d=False):
 
     # View traces of accepted and rejected components
     if is_3d:
-        cnm.estimates.nb_view_components_3d()
+        cnm.estimates.nb_view_components_3d(axis=2)
     else:
         # Plot contours of selected and rejected components
         cnm.estimates.plot_contours_nb(
@@ -168,7 +168,7 @@ def comp_eval(cnm, images, dview, cn, is_3d=False):
             img=cn, idx=cnm.estimates.idx_components)
     if len(cnm.estimates.idx_components_bad) > 0:
         if is_3d:
-            cnm.estimates.nb_view_components_3d()
+            cnm.estimates.nb_view_components_3d(axis=2)
         else:
             cnm.estimates.nb_view_components(
                 img=cn, idx=cnm.estimates.idx_components_bad)
@@ -192,7 +192,7 @@ def sel_hq_comps(cnm):
 def disp_results(cnm, cn, color='red', is_3d=False):
     """Display final results."""
     if is_3d:
-        cnm.estimates.nb_view_components_3d()
+        cnm.estimates.nb_view_components_3d(axis=2)
         return
     cnm.estimates.nb_view_components(img=cn, denoised_color=color)
     return
@@ -219,7 +219,6 @@ def view_results_movie(cnm, images, border_to_0):
 
 def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
              save_results_dir, disp_movie=True, is_3d=False):
-    # TO-DO: Print time taken
     # Set up logger if desired
     if log:
         set_up_logger(log_fn, log_level)
