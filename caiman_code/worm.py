@@ -14,8 +14,8 @@ LOG_FN = '/tmp/caiman.log'
 LOG_LEVEL = logging.WARNING
 
 # Data and data display parameters
-IMG_DIR = '/Users/benderas/NeuroPAL/11.25.19/worm3_gcamp_Out'
-COMPILED_DIR = '/Users/benderas/NeuroPAL/Compiled/worm3_gcamp_Out'
+IMG_DIR = '/Users/benderas/NeuroPAL/Test'
+COMPILED_DIR = '/Users/benderas/NeuroPAL/Compiled/Test'
 ARR_FORMAT = '.h5'
 
 # Dataset dependent parameters
@@ -76,7 +76,7 @@ def compile_imgs_to_arr(img_dir, compiled_dir, arr_format, t_char='t',
     files = [f for f in os.listdir(img_dir) if f.endswith('.tif')]
     for fn in files:
         # Parse filename to get t and z - *very specific to worm files*
-        tz_str = fn.split('_')[3]
+        tz_str = fn.split('_')[-2]
         t_lst.append(int(re.findall('\d+', tz_str[tz_str.index(t_char):])[0]))
         z_lst.append(int(re.findall('\d+', tz_str[tz_str.index(z_char):])[0]))
 
