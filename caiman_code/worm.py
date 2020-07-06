@@ -89,6 +89,10 @@ def compile_imgs_to_arr(img_dir, compiled_dir, arr_format, t_char='t',
         assert np.sum(arr[t-1, :, :, z-1]) == 0
         arr[t-1, :, :, z-1] = img
 
+    # Make sure save folder exists
+    if not os.path.exists(compiled_dir):
+        os.makedirs(compiled_dir)
+
     # Save array
     if '.h5' in arr_fn:
         h5f = h5py.File(arr_fn, 'w')
