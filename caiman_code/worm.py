@@ -17,6 +17,7 @@ LOG_LEVEL = logging.WARNING
 IMG_DIR = '/Users/benderas/NeuroPAL/Test'
 COMPILED_DIR = '/Users/benderas/NeuroPAL/Compiled/Test'
 ARR_FORMAT = '.h5'
+TIME_IT = True
 
 # Dataset dependent parameters
 IS_3D = True
@@ -107,7 +108,7 @@ def compile_imgs_to_arr(img_dir, compiled_dir, arr_format, t_char='t',
 
 def run(opts_dict, img_dir=IMG_DIR, arr_format=ARR_FORMAT, log=LOG,
         log_fn=LOG_FN, log_level=LOG_LEVEL, fr=FR, decay_time=DECAY_TIME,
-        compiled_dir=COMPILED_DIR, is_3d=IS_3D):
+        compiled_dir=COMPILED_DIR, is_3d=IS_3D, time_it=TIME_IT):
     # Compile images into array
     video_fn, arr_shape = compile_imgs_to_arr(
         img_dir, compiled_dir, arr_format)
@@ -115,7 +116,7 @@ def run(opts_dict, img_dir=IMG_DIR, arr_format=ARR_FORMAT, log=LOG,
     # Run pipeline
     caiman_code.funcs.pipeline(
         video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
-        compiled_dir, is_3d=is_3d)
+        compiled_dir, is_3d=is_3d, time_it=time_it)
     return
 
 
