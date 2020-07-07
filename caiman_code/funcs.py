@@ -160,7 +160,7 @@ def rerun_cnmf(cnm, images, dview, time_it=False):
 
     # Report time taken if requested
     if time_it:
-        print('Component evaluation took {:.3f} seconds'.format(
+        print('CNMF rerun took {:.3f} seconds'.format(
             time.time() - start))
     return cnm2
 
