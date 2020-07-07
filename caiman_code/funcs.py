@@ -9,6 +9,7 @@ import caiman as cm
 from caiman.motion_correction import MotionCorrect
 from caiman.source_extraction.cnmf import cnmf as cnmf
 from caiman.source_extraction.cnmf import params as params
+import time
 
 
 def set_up_logger(fn, level):
@@ -115,11 +116,20 @@ def run_cnmf(n_processes, opts, dview, images):
     return cnm
 
 
-def run_pipeline(n_processes, opts, dview, do_mc=True):
+def run_pipeline(n_processes, opts, dview, do_mc=True, time_it=False):
     """Run the combined steps of motion correction, memory mapping, and cnmf
     fitting in one step."""
+    # Start timer
+    start = time.time()
+
+    # Run pipeline
     cnm1 = cnmf.CNMF(n_processes, params=opts, dview=dview)
     cnm1.fit_file(motion_correct=do_mc)
+
+    # Print time if requested
+    if time_it:
+        print('Pipeline processing took {:.3f} seconds'.format(
+            time.time() - start))
     return cnm1
 
 
@@ -138,22 +148,34 @@ def inspect_results(images, cnm, is_3d=False):
     return cnm, cn
 
 
-def rerun_cnmf(cnm, images, dview):
+def rerun_cnmf(cnm, images, dview, time_it=False):
     """Re-run CNMF algorithm seeded on just the selected components from the
     previous step. Components rejected on the previous  step will not be
     recovered here, so be careful."""
+    # Start timer
+    start = time.time()
+
     # Re-run CNMF on accepted patches to refine and perform deconvolution
     cnm2 = cnm.refit(images, dview=dview)
+
+    # Report time taken if requested
+    if time_it:
+        print('Component evaluation took {:.3f} seconds'.format(
+            time.time() - start))
     return cnm2
 
 
-def comp_eval(cnm, images, dview, cn, is_3d=False):
+def comp_eval(cnm, images, dview, cn, is_3d=False, time_it=False):
     """The processing in patches creates several spurious components. These are
     filtered out by evaluating each component using three different criteria:
     (1) the shape of each component must be correlated with the data at the
     corresponding location within the FOV; (2) a minimum peak SNR is required
     over the length of a transient; (3) each shape passes a CNN based
     classifier."""
+    # Start timer
+    start = time.time()
+
+    # Evaluate components
     cnm.estimates.evaluate_components(images, cnm.params, dview=dview)
 
     # View traces of accepted and rejected components
@@ -174,6 +196,11 @@ def comp_eval(cnm, images, dview, cn, is_3d=False):
                 img=cn, idx=cnm.estimates.idx_components_bad)
     else:
         print('No components were rejected.')
+
+    # Report time taken if requested
+    if time_it:
+        print('Component evaluation took {:.3f} seconds'.format(
+            time.time() - start))
     return
 
 
@@ -218,7 +245,7 @@ def view_results_movie(cnm, images, border_to_0):
 
 
 def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
-             save_results_dir, disp_movie=True, is_3d=False):
+             save_results_dir, disp_movie=True, is_3d=False, time_it=False):
     # Set up logger if desired
     if log:
         set_up_logger(log_fn, log_level)
@@ -237,7 +264,7 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
     c, dview, n_processes = set_up_local_cluster()
 
     # Do motion correction, memory mapping, and cnmf
-    cnm = run_pipeline(n_processes, opts, dview)
+    cnm = run_pipeline(n_processes, opts, dview, time_it=time_it)
 
     # Get images from load memmap
     images = load_memmap(cnm.mmap_file)
@@ -246,10 +273,10 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
     cnm, cn = inspect_results(images, cnm, is_3d=is_3d)
 
     # Re-run CNMF on full FOV
-    cnm2 = rerun_cnmf(cnm, images, dview)
+    cnm2 = rerun_cnmf(cnm, images, dview, time_it=time_it)
 
     # Evaluate components
-    comp_eval(cnm2, images, dview, cn, is_3d=is_3d)
+    comp_eval(cnm2, images, dview, cn, is_3d=is_3d, time_it=time_it)
 
     # Extract dF/F
     extract_df_over_f(cnm2)
