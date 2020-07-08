@@ -8,8 +8,8 @@ LOG_FN = '/tmp/caiman.log'
 LOG_LEVEL = logging.WARNING
 
 # Data and data display parameters
-VIDEO_FN = 'CaImAn/example_movies/demoMovie.tif'
-DISP_MOVIE = True
+VIDEO_FN = '../CaImAn/example_movies/demoMovie.tif'
+DISP_MOVIE = False
 SAVE_RESULTS_DIR = '.'
 
 # Dataset dependent parameters
