@@ -20,6 +20,7 @@ def load_results(results_dir):
 
     # Load CNMF object using CaImAn function
     cnm = cnmf.load_CNMF(fn)
+    print('Number of components: {}'.format(cnm.estimates.C.shape[0]))
     return cnm
 
 
@@ -46,4 +47,4 @@ def main(results_dir=COMPILED_DIR, disp_movie=DISP_MOVIE,
 
 
 if __name__ == '__main__':
-    main(results_dir='..')
+    main()
