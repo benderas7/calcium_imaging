@@ -265,6 +265,8 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
 
     # Do motion correction, memory mapping, and cnmf
     cnm = run_pipeline(n_processes, opts, dview, time_it=time_it)
+    print('Number of Components after Initial Run: {}'.format(
+        cnm.estimates.C.shape[0]))
 
     # Get images from load memmap
     images = load_memmap(cnm.mmap_file)
@@ -274,6 +276,8 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
 
     # Re-run CNMF on full FOV
     cnm2 = rerun_cnmf(cnm, images, dview, time_it=time_it)
+    print('Number of Components after Second Run: {}'.format(
+        cnm2.estimates.C.shape[0]))
 
     # Evaluate components
     comp_eval(cnm2, images, dview, cn, is_3d=is_3d, time_it=time_it)
@@ -283,6 +287,8 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
 
     # Select only high quality components
     sel_hq_comps(cnm2)
+    print('Number of High-Quality Components: {}'.format(
+        cnm2.estimates.C.shape[0]))
 
     # Save results if specified
     if save_results_dir:
