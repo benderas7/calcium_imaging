@@ -40,6 +40,7 @@ def play_movie_custom(
     else:
         imgs = imgs[frame_range]
 
+    y_rec_color = None
     if use_color:
         cols_c = np.random.rand(estimates.C.shape[0], 1, 3) * gain_color
         cs = np.expand_dims(estimates.C[:, frame_range], -1) * cols_c
@@ -100,6 +101,7 @@ def play_movie_custom(
 
     if thr > 0:
         import cv2
+        out = None
         if save_movie:
             fourcc = cv2.VideoWriter_fourcc(*opencv_codec)
             out = cv2.VideoWriter(movie_name, fourcc, 30.0,
