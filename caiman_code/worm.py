@@ -45,6 +45,7 @@ DEFINED_OPTS = {
     'nb': 1,
     'include_noise': False,
     'p': 0,
+    'K': 140,
 
     # Component evaluation parameters
     'use_cnn': False
