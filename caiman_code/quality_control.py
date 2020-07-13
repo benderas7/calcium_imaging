@@ -45,8 +45,8 @@ def play_movie_custom(
         cols_c = np.random.rand(estimates.C.shape[0], 1, 3) * gain_color
         cs = np.expand_dims(estimates.C[:, frame_range], -1) * cols_c
         y_rec_color = np.tensordot(estimates.A.toarray(), cs, axes=(1, 0))
-        y_rec_color = y_rec_color.reshape(dims + (-1, 3),
-                                          order='F').transpose(2, 0, 1, 3)
+        y_rec_color = y_rec_color.reshape(dims + (-1, 3), order='F')
+        y_rec_color = np.moveaxis(y_rec_color, -2, 0)
 
     ac = estimates.A.dot(estimates.C[:, frame_range])
     y_rec = ac.reshape(dims + (-1,), order='F')
