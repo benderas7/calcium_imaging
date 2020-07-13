@@ -71,12 +71,14 @@ def play_movie_custom(
                                    order='F'),
                 ssub_b, 0), ssub_b, 1)[:dims[0], :dims[1]].reshape(
                 (-1, b.shape[-1]), order='F'))
-        b = b.reshape(dims + (-1,), order='F').transpose([2, 0, 1])
+        b = b.reshape(dims + (-1,), order='F')
+        b = np.moveaxis(b, -1, 0)
     elif estimates.b is not None and estimates.f is not None:
         b = estimates.b.dot(estimates.f[:, frame_range])
         if 'matrix' in str(type(b)):
             b = b.toarray()
-        b = b.reshape(dims + (-1,), order='F').transpose([2, 0, 1])
+        b = b.reshape(dims + (-1,), order='F')
+        b = np.moveaxis(b, -1, 0)
     else:
         b = np.zeros_like(y_rec)
     if bpx > 0:
