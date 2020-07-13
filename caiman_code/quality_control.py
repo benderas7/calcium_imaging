@@ -50,7 +50,7 @@ def play_movie_custom(
 
     ac = estimates.A.dot(estimates.C[:, frame_range])
     y_rec = ac.reshape(dims + (-1,), order='F')
-    y_rec = y_rec.transpose([2, 0, 1])
+    y_rec = np.moveaxis(y_rec, -1, 0)
     if estimates.W is not None:
         ssub_b = int(round(np.sqrt(np.prod(dims) / estimates.W.shape[0])))
         b = imgs.reshape((-1, np.prod(dims)), order='F').T - ac
