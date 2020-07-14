@@ -99,10 +99,10 @@ def play_movie_custom(
         if use_color:
             y_rec_color_1z = [np.squeeze(arr) for arr in np.split(
                 y_rec_color, min(y_rec_color.shape[:-1]), axis=int(np.argmin(
-                    y_rec_color[:-1].shape)))]
+                    y_rec_color.shape[:-1])))]
 
-            for imgs_1z, y_rec_1z, y_rec_color_1z, b_1z in zip(
-                    imgs_by_z, y_rec_by_z, y_rec_color_1z, b_by_z):
+            for i, (imgs_1z, y_rec_1z, y_rec_color_1z, b_1z) in enumerate(zip(
+                    imgs_by_z, y_rec_by_z, y_rec_color_1z, b_by_z)):
                 y_res = imgs_1z - y_rec_1z - b_1z
                 if bpx > 0:
                     y_rec_color = y_rec_color[:, bpx:-bpx, bpx:-bpx]
@@ -122,17 +122,17 @@ def play_movie_custom(
         if use_color:
             if bpx > 0:
                 y_rec_color = y_rec_color[:, bpx:-bpx, bpx:-bpx]
-            movs = [caiman.concatenate(
+            movs = caiman.concatenate(
                 (np.repeat(np.expand_dims(imgs - (not include_bck) * b, -1), 3,
                            3),
                  y_rec_color + include_bck * np.expand_dims(b * gain_bck, -1),
                  np.repeat(np.expand_dims(y_res * gain_res, -1), 3, 3)),
-                axis=2)]
+                axis=2)
         else:
-            movs = [caiman.concatenate(
+            movs = caiman.concatenate(
                 (imgs[frame_range] - (not include_bck) * b,
                  y_rec + include_bck * b, y_res * gain_res),
-                axis=2)]
+                axis=2)
 
     if not display:
         return movs
