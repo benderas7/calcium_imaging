@@ -11,7 +11,6 @@ import caiman_code.funcs as funcs
 from caiman_code.worm import COMPILED_DIR
 
 # Set parameters
-SAVE_NAME = 'results_movie.avi'
 #####
 
 
@@ -26,10 +25,10 @@ def load_results(results_dir):
 
 
 def play_movie_custom(
-        estimates, imgs, q_max=99.75, q_min=2, gain_res=1, magnification=1, 
+        estimates, imgs, q_max=99.75, q_min=2, magnification=1,
         include_bck=True, frame_range=slice(None, None, None),
-        save_movie=False, movie_name='results_movie.avi', gain_color=4,
-        gain_bck=0.2):
+        save_dir=None, movie_name='results_movie.avi',
+        colors_name='results_movie_colors.npy', gain_color=4, gain_bck=0.2):
     """Adapted from caiman/source_extraction/cnmf/estimates.py for 3D video."""
     dims = imgs.shape[1:]
     if 'movie' not in str(type(imgs)):
@@ -38,6 +37,9 @@ def play_movie_custom(
         imgs = imgs[frame_range]
 
     cols_c = np.random.rand(estimates.C.shape[0], 1, 3) * gain_color
+    if save_dir:
+        np.save(os.path.join(save_dir, colors_name), cols_c)
+
     cs = np.expand_dims(estimates.C[:, frame_range], -1) * cols_c
     y_rec_color = np.tensordot(estimates.A.toarray(), cs, axes=(1, 0))
     y_rec_color = y_rec_color.reshape(dims + (-1, 3), order='F')
@@ -96,32 +98,31 @@ def play_movie_custom(
 
         per_i = movie_name.index('.')
         movie_fn = '{}_z{}{}'.format(movie_name[:per_i], i, movie_name[per_i:])
+        movie_fn_full_path = os.path.join(save_dir, movie_fn)
 
         mov.play(q_min=q_min, q_max=q_max, magnification=magnification,
-                 save_movie=save_movie, movie_name=movie_fn)
+                 save_movie=bool(save_dir), movie_name=movie_fn_full_path)
 
         del mov
     return cols_c
 
 
-def make_movie(cnm, save_fn):
+def make_movie(cnm, save_dir):
     # Get images from load memmap
     images = funcs.load_memmap(cnm.mmap_file)
 
     # Make video for each ROI
     cols_c = play_movie_custom(
-        cnm.estimates, images, save_movie=bool(save_fn), movie_name=save_fn)
-    np.save(save_fn.replace('.avi', '_colors.npy'), cols_c)
+        cnm.estimates, images, save_dir=save_dir)
     return
 
 
-def main(results_dir=COMPILED_DIR, save_name=SAVE_NAME):
+def main(results_dir=COMPILED_DIR):
     # Load results
     cnm = load_results(results_dir)
 
     # Make movie
-    save_fn = os.path.join(results_dir, save_name)
-    make_movie(cnm, save_fn)
+    make_movie(cnm, results_dir)
     return
 
 
