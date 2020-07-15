@@ -37,9 +37,13 @@ def play_movie_custom(
     else:
         imgs = imgs[frame_range]
 
-    cols_c = np.random.rand(estimates.C.shape[0], 1, 3) * gain_color
-    if save_dir:
-        np.save(os.path.join(save_dir, colors_name), cols_c)
+    cols_c_fn = os.path.join(save_dir, colors_name)
+    if os.path.exists(cols_c_fn):
+        cols_c = np.load(cols_c_fn)
+    else:
+        cols_c = np.random.rand(estimates.C.shape[0], 1, 3) * gain_color
+        if save_dir:
+            np.save(cols_c_fn, cols_c)
 
     cs = np.expand_dims(estimates.C[:, frame_range], -1) * cols_c
     y_rec_color = np.tensordot(estimates.A.toarray(), cs, axes=(1, 0))
@@ -92,19 +96,20 @@ def play_movie_custom(
 
     for i, (imgs_1z, y_rec_1z, y_rec_color_1z, b_1z) in enumerate(zip(
             imgs_by_z, y_rec_by_z, y_rec_color_1z, b_by_z)):
-        mov = caiman.concatenate((np.repeat(np.expand_dims(
-            imgs_1z - (not include_bck) * b_1z, -1), 3, 3),
-            y_rec_color_1z + include_bck * np.expand_dims(
-                b_1z * gain_bck, -1)), axis=2)
-
         per_i = movie_name.index('.')
         movie_fn = '{}_z{}{}'.format(movie_name[:per_i], i, movie_name[per_i:])
         movie_fn_full_path = os.path.join(save_dir, movie_fn)
 
-        mov.play(q_min=q_min, q_max=q_max, magnification=magnification,
-                 save_movie=bool(save_dir), movie_name=movie_fn_full_path)
+        if not os.path.exists(movie_fn_full_path):
+            mov = caiman.concatenate((np.repeat(np.expand_dims(
+                imgs_1z - (not include_bck) * b_1z, -1), 3, 3),
+                y_rec_color_1z + include_bck * np.expand_dims(
+                    b_1z * gain_bck, -1)), axis=2)
 
-        del mov
+            mov.play(q_min=q_min, q_max=q_max, magnification=magnification,
+                     save_movie=bool(save_dir), movie_name=movie_fn_full_path)
+
+            del mov
     return cols_c
 
 
@@ -118,19 +123,14 @@ def make_movie(cnm, save_dir):
     return cols_c
 
 
-def colored_traces(cnm, cols_c, n_cols=3):
+def colored_traces(cnm, cols_c, n_rows=5, n_cols=3, gain_color=4):
     """Plot and savee traces for each component in color that they are shown
     in thee video."""
     traces = cnm.estimates.C
 
-    # Remove unnecessary dimensions
+    # Remove unnecessary dimensions and map values between 0 and 1
     cols_c = np.squeeze(cols_c)
-
-    # Plot traces
-    fig, axes = plt.subplots(int(np.ceil(traces.shape[0] / n_cols)), n_cols)
-    for ax, c, trace in zip(axes, cols_c, traces):
-        ax.plot(trace, c=c)
-    plt.show()
+    cols_c = cols_c / gain_color
     return
 
 
@@ -142,7 +142,7 @@ def main(results_dir=COMPILED_DIR):
     cols_c = make_movie(cnm, results_dir)
 
     # Make traces for each component colored as in video
-
+    colored_traces(cnm, cols_c)
     return
 
 
