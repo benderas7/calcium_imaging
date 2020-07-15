@@ -7,6 +7,7 @@ from caiman.source_extraction.cnmf import cnmf
 from caiman.source_extraction.cnmf.initialization import downscale
 import caiman
 import numpy as np
+import matplotlib.pyplot as plt
 import caiman_code.funcs as funcs
 from caiman_code.worm import COMPILED_DIR
 
@@ -114,6 +115,22 @@ def make_movie(cnm, save_dir):
     # Make video for each ROI
     cols_c = play_movie_custom(
         cnm.estimates, images, save_dir=save_dir)
+    return cols_c
+
+
+def colored_traces(cnm, cols_c, n_cols=3):
+    """Plot and savee traces for each component in color that they are shown
+    in thee video."""
+    traces = cnm.estimates.C
+
+    # Remove unnecessary dimensions
+    cols_c = np.squeeze(cols_c)
+
+    # Plot traces
+    fig, axes = plt.subplots(int(np.ceil(traces.shape[0] / n_cols)), n_cols)
+    for ax, c, trace in zip(axes, cols_c, traces):
+        ax.plot(trace, c=c)
+    plt.show()
     return
 
 
@@ -122,7 +139,10 @@ def main(results_dir=COMPILED_DIR):
     cnm = load_results(results_dir)
 
     # Make movie
-    make_movie(cnm, results_dir)
+    cols_c = make_movie(cnm, results_dir)
+
+    # Make traces for each component colored as in video
+
     return
 
 
