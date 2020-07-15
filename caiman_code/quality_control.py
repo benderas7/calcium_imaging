@@ -89,18 +89,18 @@ def play_movie_custom(
 
     for i, (imgs_1z, y_rec_1z, y_rec_color_1z, b_1z) in enumerate(zip(
             imgs_by_z, y_rec_by_z, y_rec_color_1z, b_by_z)):
-        y_res = imgs_1z - y_rec_1z - b_1z
         mov = caiman.concatenate((np.repeat(np.expand_dims(
             imgs_1z - (not include_bck) * b_1z, -1), 3, 3),
             y_rec_color_1z + include_bck * np.expand_dims(
-                b_1z * gain_bck, -1), np.repeat(np.expand_dims(
-                    y_res * gain_res, -1), 3, 3)), axis=2)
+                b_1z * gain_bck, -1)), axis=2)
 
         per_i = movie_name.index('.')
         movie_fn = '{}_z{}{}'.format(movie_name[:per_i], i, movie_name[per_i:])
 
         mov.play(q_min=q_min, q_max=q_max, magnification=magnification,
                  save_movie=save_movie, movie_name=movie_fn)
+
+        del mov
     return cols_c
 
 
