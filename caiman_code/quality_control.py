@@ -123,7 +123,7 @@ def make_movie(cnm, save_dir):
     return cols_c
 
 
-def colored_traces(cnm, cols_c, n_rows=5, n_cols=3, gain_color=4):
+def colored_traces(cnm, cols_c, save_dir, n_rows=5, n_cols=3, gain_color=4):
     """Plot and savee traces for each component in color that they are shown
     in thee video."""
     traces = cnm.estimates.C
@@ -145,7 +145,7 @@ def colored_traces(cnm, cols_c, n_rows=5, n_cols=3, gain_color=4):
             axes.flatten()[i].set_xlabel('')
             count += 1
         plt.tight_layout()
-        plt.savefig('fig{}.png'.format(j))
+        plt.savefig(os.path.join(save_dir, 'colored_traces{}.png'.format(j)))
     return
 
 
@@ -154,10 +154,16 @@ def main(results_dir=COMPILED_DIR):
     cnm = load_results(results_dir)
 
     # Make movie
-    cols_c = make_movie(cnm, results_dir)
+    movie_dir = os.path.join(results_dir, 'movies')
+    if not os.path.exists(movie_dir):
+        os.makedirs(movie_dir)
+    cols_c = make_movie(cnm, movie_dir)
 
     # Make traces for each component colored as in video
-    colored_traces(cnm, cols_c)
+    traces_dir = os.path.join(results_dir, 'traces')
+    if not os.path.exists(traces_dir):
+        os.makedirs(traces_dir)
+    colored_traces(cnm, cols_c, traces_dir)
     return
 
 
