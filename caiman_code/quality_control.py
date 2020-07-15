@@ -8,6 +8,7 @@ from caiman.source_extraction.cnmf.initialization import downscale
 import caiman
 import numpy as np
 import matplotlib.pyplot as plt
+from moviepy.editor import VideoFileClip, clips_array
 import caiman_code.funcs as funcs
 from caiman_code.worm import COMPILED_DIR
 
@@ -123,6 +124,26 @@ def make_movie(cnm, save_dir):
     return cols_c
 
 
+def stack_movies(movie_dir, n_cols=2):
+    """Stack movies from different z-stacks and integrate into one movie
+    file."""
+    # Load movies
+    clips = [VideoFileClip(os.path.join(movie_dir, f)) for f in os.listdir(
+        movie_dir) if f.endswith('.avi')]
+
+    # Make clips array
+    if len(clips) % n_cols != 0:
+        clips.extend([clips[0].fl_image(lambda im: 0*im)] * (
+                n_cols - len(clips) % n_cols))
+    clips_arr = [clips[i:i+n_cols] for i in range(0, len(clips), n_cols)]
+    print(np.array(clips_arr).shape)
+    composite = clips_array(clips_arr)
+
+    # Save file
+    composite.write_videofile(os.path.join(movie_dir, 'composite.mp4'))
+    return
+
+
 def colored_traces(cnm, cols_c, save_dir, n_rows=5, n_cols=3, gain_color=4):
     """Plot and savee traces for each component in color that they are shown
     in thee video."""
@@ -158,6 +179,7 @@ def main(results_dir=COMPILED_DIR):
     if not os.path.exists(movie_dir):
         os.makedirs(movie_dir)
     cols_c = make_movie(cnm, movie_dir)
+    stack_movies(movie_dir)
 
     # Make traces for each component colored as in video
     traces_dir = os.path.join(results_dir, 'traces')
