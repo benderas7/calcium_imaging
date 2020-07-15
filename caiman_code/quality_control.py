@@ -131,6 +131,21 @@ def colored_traces(cnm, cols_c, n_rows=5, n_cols=3, gain_color=4):
     # Remove unnecessary dimensions and map values between 0 and 1
     cols_c = np.squeeze(cols_c)
     cols_c = cols_c / gain_color
+
+    # Plot traces
+    n_plts = int(np.ceil(cols_c.shape[0] / (n_rows * n_cols)))
+    c_splits = np.array_split(cols_c, n_plts)
+    traces_splits = np.array_split(traces, n_plts)
+    count = 0
+    for j, (c_split, traces_split) in enumerate(zip(c_splits, traces_splits)):
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
+        for i, (c, trace) in enumerate(zip(c_split, traces_split)):
+            axes.flatten()[i].plot(trace, c=c)
+            axes.flatten()[i].set_title(count)
+            axes.flatten()[i].set_xlabel('')
+            count += 1
+        plt.tight_layout()
+        plt.savefig('fig{}.png'.format(j))
     return
 
 
