@@ -11,7 +11,6 @@ import caiman_code.funcs as funcs
 from caiman_code.worm import COMPILED_DIR
 
 # Set parameters
-DISP_MOVIE = False
 SAVE_NAME = 'results_movie.avi'
 #####
 
@@ -29,8 +28,8 @@ def load_results(results_dir):
 def play_movie_custom(
         estimates, imgs, q_max=99.75, q_min=2, gain_res=1, magnification=1, 
         include_bck=True, frame_range=slice(None, None, None),
-        save_movie=False, movie_name='results_movie.avi', display=True,
-        gain_color=4, gain_bck=0.2):
+        save_movie=False, movie_name='results_movie.avi', gain_color=4,
+        gain_bck=0.2):
     """Adapted from caiman/source_extraction/cnmf/estimates.py for 3D video."""
     dims = imgs.shape[1:]
     if 'movie' not in str(type(imgs)):
@@ -88,44 +87,41 @@ def play_movie_custom(
         y_rec_color, min(y_rec_color.shape[:-1]), axis=int(np.argmin(
             y_rec_color.shape[:-1])))]
 
-    movs = []
     for i, (imgs_1z, y_rec_1z, y_rec_color_1z, b_1z) in enumerate(zip(
             imgs_by_z, y_rec_by_z, y_rec_color_1z, b_by_z)):
         y_res = imgs_1z - y_rec_1z - b_1z
-        movs.append(caiman.concatenate((np.repeat(np.expand_dims(
+        mov = caiman.concatenate((np.repeat(np.expand_dims(
             imgs_1z - (not include_bck) * b_1z, -1), 3, 3),
             y_rec_color_1z + include_bck * np.expand_dims(
                 b_1z * gain_bck, -1), np.repeat(np.expand_dims(
-                    y_res * gain_res, -1), 3, 3)), axis=2))
+                    y_res * gain_res, -1), 3, 3)), axis=2)
 
-    if not display:
-        return movs
+        per_i = movie_name.index('.')
+        movie_fn = '{}_z{}{}'.format(movie_name[:per_i], i, movie_name[per_i:])
 
-    movs[0].play(q_min=q_min, q_max=q_max, magnification=magnification,
-                 save_movie=save_movie, movie_name=movie_name)
+        mov.play(q_min=q_min, q_max=q_max, magnification=magnification,
+                 save_movie=save_movie, movie_name=movie_fn)
+    return cols_c
 
-    return
 
-
-def make_movie(cnm, disp_movie, save_fn):
+def make_movie(cnm, save_fn):
     # Get images from load memmap
     images = funcs.load_memmap(cnm.mmap_file)
 
     # Make video for each ROI
-    mov = play_movie_custom(
-        cnm.estimates, images, display=disp_movie, save_movie=bool(save_fn),
-        movie_name=save_fn)
-    return mov
+    cols_c = play_movie_custom(
+        cnm.estimates, images, save_movie=bool(save_fn), movie_name=save_fn)
+    np.save(save_fn.replace('.avi', '_colors.npy'), cols_c)
+    return
 
 
-def main(results_dir=COMPILED_DIR, disp_movie=DISP_MOVIE,
-         save_name=SAVE_NAME):
+def main(results_dir=COMPILED_DIR, save_name=SAVE_NAME):
     # Load results
     cnm = load_results(results_dir)
 
     # Make movie
     save_fn = os.path.join(results_dir, save_name)
-    make_movie(cnm, disp_movie, save_fn)
+    make_movie(cnm, save_fn)
     return
 
 
