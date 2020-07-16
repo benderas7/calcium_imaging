@@ -29,7 +29,7 @@ def load_results(results_dir):
 def play_movie_custom(
         estimates, imgs, q_max=99.75, q_min=2, magnification=1,
         include_bck=True, frame_range=slice(None, None, None),
-        save_dir=None, movie_name='results_movie.avi',
+        save_dir=None, movie_name='results_movie.avi', cmap='hsv',
         colors_name='results_movie_colors.npy', gain_color=4, gain_bck=0.2):
     """Adapted from caiman/source_extraction/cnmf/estimates.py for 3D video."""
     dims = imgs.shape[1:]
@@ -42,7 +42,8 @@ def play_movie_custom(
     if os.path.exists(cols_c_fn):
         cols_c = np.load(cols_c_fn)
     else:
-        cols_c = np.random.rand(estimates.C.shape[0], 1, 3) * gain_color
+        cols_c = plt.get_cmap(cmap)(np.linspace(
+            0, 1, estimates.C.shape[0]))[:, np.newaxis, :-1] * gain_color
         if save_dir:
             np.save(cols_c_fn, cols_c)
 
