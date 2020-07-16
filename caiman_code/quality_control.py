@@ -136,11 +136,12 @@ def stack_movies(movie_dir, n_cols=2):
         clips.extend([clips[0].fl_image(lambda im: 0*im)] * (
                 n_cols - len(clips) % n_cols))
     clips_arr = [clips[i:i+n_cols] for i in range(0, len(clips), n_cols)]
-    print(np.array(clips_arr).shape)
     composite = clips_array(clips_arr)
 
     # Save file
-    composite.write_videofile(os.path.join(movie_dir, 'composite.mp4'))
+    comp_fn = os.path.join(movie_dir, 'composite.mp4')
+    if not os.path.exists(comp_fn):
+        composite.write_videofile(comp_fn)
     return
 
 
