@@ -116,12 +116,12 @@ def play_movie_custom(
 
 def make_movie(cnm, save_dir):
     # Get images from load memmap
-    images = funcs.load_memmap(cnm.mmap_file)
+    imgs = funcs.load_memmap(cnm.mmap_file)
 
     # Make video for each ROI
     cols_c = play_movie_custom(
-        cnm.estimates, images, save_dir=save_dir)
-    return cols_c
+        cnm.estimates, imgs, save_dir=save_dir)
+    return cols_c, imgs
 
 
 def stack_movies(movie_dir, n_cols=2):
@@ -145,10 +145,14 @@ def stack_movies(movie_dir, n_cols=2):
     return
 
 
-def colored_traces(cnm, cols_c, save_dir, n_rows=5, n_cols=3, gain_color=4):
+def colored_traces(cnm, imgs, cols_c, save_dir, n_rows=5, n_cols=3,
+                   gain_color=4):
     """Plot and savee traces for each component in color that they are shown
     in thee video."""
+    # Extract traces and spatial footprints of components
     traces = cnm.estimates.C
+    spat_fp = cnm.estimates.A.toarray().reshape(
+        imgs.shape[1:] + (-1,), order='F')
 
     # Remove unnecessary dimensions and map values between 0 and 1
     cols_c = np.squeeze(cols_c)
@@ -163,7 +167,9 @@ def colored_traces(cnm, cols_c, save_dir, n_rows=5, n_cols=3, gain_color=4):
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
         for i, (c, trace) in enumerate(zip(c_split, traces_split)):
             axes.flatten()[i].plot(trace, c=c)
-            axes.flatten()[i].set_title(count)
+            axes.flatten()[i].set_title('Component {}; Z-Stacks:{}'.format(
+                count, np.argwhere(np.sum(
+                    spat_fp[:, :, :, i], axis=(0, 1))).flatten()))
             axes.flatten()[i].set_xlabel('')
             count += 1
         plt.tight_layout()
@@ -179,14 +185,14 @@ def main(results_dir=COMPILED_DIR):
     movie_dir = os.path.join(results_dir, 'movies')
     if not os.path.exists(movie_dir):
         os.makedirs(movie_dir)
-    cols_c = make_movie(cnm, movie_dir)
+    cols_c, imgs = make_movie(cnm, movie_dir)
     stack_movies(movie_dir)
 
     # Make traces for each component colored as in video
     traces_dir = os.path.join(results_dir, 'traces')
     if not os.path.exists(traces_dir):
         os.makedirs(traces_dir)
-    colored_traces(cnm, cols_c, traces_dir)
+    colored_traces(cnm, imgs, cols_c, traces_dir)
     return
 
 
