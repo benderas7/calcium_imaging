@@ -7,6 +7,7 @@ from caiman.source_extraction.cnmf import cnmf
 from caiman.source_extraction.cnmf.initialization import downscale
 import caiman
 import numpy as np
+from scipy.ndimage import center_of_mass
 import matplotlib.pyplot as plt
 from moviepy.config import change_settings
 import moviepy.editor as moviepy
@@ -177,9 +178,11 @@ def colored_traces(cnm, imgs, cols_c, save_dir, n_rows=5, n_cols=3,
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
         for i, (c, trace) in enumerate(zip(c_split, traces_split)):
             axes.flatten()[i].plot(trace, c=c)
-            axes.flatten()[i].set_title('Component {}; Z-Stacks:{}'.format(
-                count, np.argwhere(np.sum(
-                    spat_fp[:, :, :, i], axis=(0, 1))).flatten()))
+            xyz = spat_fp[:, :, :, i]
+            axes.flatten()[i].set_title(
+                'Comp {}; Z:{}; ''Center: {}'.format(
+                    count, np.argwhere(np.sum(xyz, axis=(0, 1))).flatten(),
+                    [int(val) for val in center_of_mass(xyz)]))
             axes.flatten()[i].set_xlabel('')
             count += 1
         plt.tight_layout()
