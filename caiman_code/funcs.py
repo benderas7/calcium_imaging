@@ -245,7 +245,8 @@ def view_results_movie(cnm, images, border_to_0):
 
 
 def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
-             save_results_dir, disp_movie=True, is_3d=False, time_it=False):
+             save_results_dir, do_comp_eval=True, disp_movie=True,
+             is_3d=False, time_it=False):
     # Set up logger if desired
     if log:
         set_up_logger(log_fn, log_level)
@@ -280,15 +281,17 @@ def pipeline(video_fn, log, log_fn, log_level, fr, decay_time, opts_dict,
         cnm2.estimates.C.shape[0]))
 
     # Evaluate components
-    comp_eval(cnm2, images, dview, cn, is_3d=is_3d, time_it=time_it)
+    if do_comp_eval:
+        comp_eval(cnm2, images, dview, cn, is_3d=is_3d, time_it=time_it)
 
     # Extract dF/F
     extract_df_over_f(cnm2)
 
     # Select only high quality components
-    sel_hq_comps(cnm2)
-    print('Number of High-Quality Components: {}'.format(
-        cnm2.estimates.C.shape[0]))
+    if do_comp_eval:
+        sel_hq_comps(cnm2)
+        print('Number of High-Quality Components: {}'.format(
+            cnm2.estimates.C.shape[0]))
 
     # Save results if specified
     if save_results_dir:
