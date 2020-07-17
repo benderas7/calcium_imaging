@@ -8,7 +8,8 @@ from caiman.source_extraction.cnmf.initialization import downscale
 import caiman
 import numpy as np
 import matplotlib.pyplot as plt
-from moviepy.editor import VideoFileClip, clips_array
+from moviepy.config import change_settings
+import moviepy.editor as moviepy
 import caiman_code.funcs as funcs
 from caiman_code.worm import COMPILED_DIR
 
@@ -129,15 +130,23 @@ def stack_movies(movie_dir, n_cols=2):
     """Stack movies from different z-stacks and integrate into one movie
     file."""
     # Load movies
-    clips = [VideoFileClip(os.path.join(movie_dir, f)) for f in os.listdir(
-        movie_dir) if f.endswith('.avi')]
+    change_settings({"IMAGEMAGICK_BINARY":
+                    "/usr/local/Cellar/imagemagick/7.0.10-23/bin/convert"})
+    files = [f for f in os.listdir(movie_dir) if f.endswith('.avi')]
+    clips = []
+    for f in files:
+        clip = moviepy.VideoFileClip(os.path.join(movie_dir, f))
+        z = f.split('z')[-1].split('.')[0]
+        txt_clip = moviepy.TextClip(z, color='white')
+        txt_clip = txt_clip.set_position(('right', 'top')).set_duration(60)
+        clips.append(moviepy.CompositeVideoClip([clip, txt_clip]))
 
     # Make clips array
     if len(clips) % n_cols != 0:
         clips.extend([clips[0].fl_image(lambda im: 0*im)] * (
                 n_cols - len(clips) % n_cols))
     clips_arr = [clips[i:i+n_cols] for i in range(0, len(clips), n_cols)]
-    composite = clips_array(clips_arr)
+    composite = moviepy.clips_array(clips_arr)
 
     # Save file
     comp_fn = os.path.join(movie_dir, 'composite.mp4')
