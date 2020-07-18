@@ -50,12 +50,12 @@ def play_movie_custom(
             np.save(cols_c_fn, cols_c)
 
     for j in range(int(np.ceil(estimates.C.shape[0] / n_comps_per_slice))):
-        slice_dir = os.path.join(save_dir, 'slice{}'.format(j))
+        comp_slice = [val for val in range(j * n_comps_per_slice, (
+                j + 1) * n_comps_per_slice) if val < estimates.C.shape[0]]
+        slice_dir = os.path.join(save_dir, 'comps{}-{}'.format(
+            comp_slice[0], comp_slice[-1]))
         if not os.path.exists(slice_dir):
             os.makedirs(slice_dir)
-        comp_slice = [val for val in range(j * n_comps_per_slice, (
-                j + 1) * n_comps_per_slice) if val < len(
-            estimates.idx_components)]
         estimates.select_components(idx_components=comp_slice)
 
         cs = np.expand_dims(estimates.C[:, frame_range], -1) * cols_c
@@ -110,7 +110,8 @@ def play_movie_custom(
         for i, (imgs_1z, y_rec_1z, y_rec_color_1z, b_1z) in enumerate(zip(
                 imgs_by_z, y_rec_by_z, y_rec_color_1z, b_by_z)):
             per_i = movie_name.index('.')
-            movie_fn = '{}_z{}{}'.format(movie_name[:per_i], i, movie_name[per_i:])
+            movie_fn = '{}_z{}{}'.format(
+                movie_name[:per_i], i, movie_name[per_i:])
             movie_fn_full_path = os.path.join(slice_dir, movie_fn)
 
             if not os.path.exists(movie_fn_full_path):
@@ -141,30 +142,34 @@ def make_movie(cnm, save_dir):
 
 def stack_movies(movie_dir, n_cols=2):
     """Stack movies from different z-stacks and integrate into one movie
-    file."""
-    # Load movies
-    change_settings({"IMAGEMAGICK_BINARY":
-                    "/usr/local/Cellar/imagemagick/7.0.10-23/bin/convert"})
-    files = [f for f in os.listdir(movie_dir) if f.endswith('.avi')]
-    clips = []
-    for f in files:
-        clip = moviepy.VideoFileClip(os.path.join(movie_dir, f))
-        z = f.split('z')[-1].split('.')[0]
-        txt_clip = moviepy.TextClip(z, color='white')
-        txt_clip = txt_clip.set_position(('right', 'top')).set_duration(60)
-        clips.append(moviepy.CompositeVideoClip([clip, txt_clip]))
+    file for each set of components."""
+    comps_dirs = [os.path.join(movie_dir, d) for d in os.listdir(movie_dir) if
+                 os.path.isdir(d)]
 
-    # Make clips array
-    if len(clips) % n_cols != 0:
-        clips.extend([clips[0].fl_image(lambda im: 0*im)] * (
-                n_cols - len(clips) % n_cols))
-    clips_arr = [clips[i:i+n_cols] for i in range(0, len(clips), n_cols)]
-    composite = moviepy.clips_array(clips_arr)
+    for comps_dir in comps_dirs:
+        # Load movies
+        change_settings({"IMAGEMAGICK_BINARY":
+                        "/usr/local/Cellar/imagemagick/7.0.10-23/bin/convert"})
+        files = [f for f in os.listdir(comps_dir) if f.endswith('.avi')]
+        clips = []
+        for f in files:
+            clip = moviepy.VideoFileClip(os.path.join(movie_dir, f))
+            z = f.split('z')[-1].split('.')[0]
+            txt_clip = moviepy.TextClip(z, color='white')
+            txt_clip = txt_clip.set_position(('right', 'top')).set_duration(60)
+            clips.append(moviepy.CompositeVideoClip([clip, txt_clip]))
 
-    # Save file
-    comp_fn = os.path.join(movie_dir, 'composite.mp4')
-    if not os.path.exists(comp_fn):
-        composite.write_videofile(comp_fn)
+        # Make clips array
+        if len(clips) % n_cols != 0:
+            clips.extend([clips[0].fl_image(lambda im: 0*im)] * (
+                    n_cols - len(clips) % n_cols))
+        clips_arr = [clips[i:i+n_cols] for i in range(0, len(clips), n_cols)]
+        composite = moviepy.clips_array(clips_arr)
+
+        # Save file
+        comp_fn = os.path.join(comps_dir, 'composite.mp4')
+        if not os.path.exists(comp_fn):
+            composite.write_videofile(comp_fn)
     return
 
 
