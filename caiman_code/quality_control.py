@@ -143,6 +143,7 @@ def make_movie(cnm, save_dir):
 def stack_movies(movie_dir, n_cols=2):
     """Stack movies from different z-stacks and integrate into one movie
     file for each set of components."""
+    # Load folders for each component set
     comps_dirs = [os.path.join(movie_dir, d) for d in os.listdir(movie_dir) if
                  os.path.isdir(d)]
 
@@ -173,27 +174,31 @@ def stack_movies(movie_dir, n_cols=2):
     return
 
 
-def colored_traces(cnm, imgs, cols_c, save_dir, n_rows=5, n_cols=3,
+def colored_traces(cnm, imgs, cols_c, save_dir, n_comps_per_slice=12, n_cols=3,
                    gain_color=4):
     """Plot and savee traces for each component in color that they are shown
-    in thee video."""
-    # Extract traces and spatial footprints of components
-    traces = cnm.estimates.C
-    spat_fp = cnm.estimates.A.toarray().reshape(
-        imgs.shape[1:] + (-1,), order='F')
+    in the video."""
+    # Get total number of components
+    n_comps_total = cnm.estimates.C.shape[0]
+    for j in range(int(np.ceil(n_comps_total / n_comps_per_slice))):
+        # Select desired components
+        comp_slice = [val for val in range(j * n_comps_per_slice, (
+                j + 1) * n_comps_per_slice) if val < cnm.estimates.C.shape[0]]
+        cnm.estimates.select_components(idx_components=comp_slice)
 
-    # Remove unnecessary dimensions and map values between 0 and 1
-    cols_c = np.squeeze(cols_c)
-    cols_c = cols_c / gain_color
+        # Extract traces and spatial footprints of components
+        traces = cnm.estimates.C
+        spat_fp = cnm.estimates.A.toarray().reshape(
+            imgs.shape[1:] + (-1,), order='F')
 
-    # Plot traces
-    n_plts = int(np.ceil(cols_c.shape[0] / (n_rows * n_cols)))
-    c_splits = np.array_split(cols_c, n_plts)
-    traces_splits = np.array_split(traces, n_plts)
-    count = 0
-    for j, (c_split, traces_split) in enumerate(zip(c_splits, traces_splits)):
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
-        for i, (c, trace) in enumerate(zip(c_split, traces_split)):
+        # Remove unnecessary dimensions and map values between 0 and 1
+        cols_c = np.squeeze(cols_c)
+        cols_c = cols_c / gain_color
+
+        # Plot traces
+        count = 0
+        fig, axes = plt.subplots(n_comps_per_slice, n_cols, figsize=(15, 10))
+        for i, (c, trace) in enumerate(zip(cols_c, traces)):
             axes.flatten()[i].plot(trace, c=c)
             xyz = spat_fp[:, :, :, i]
             axes.flatten()[i].set_title(
@@ -203,7 +208,8 @@ def colored_traces(cnm, imgs, cols_c, save_dir, n_rows=5, n_cols=3,
             axes.flatten()[i].set_xlabel('')
             count += 1
         plt.tight_layout()
-        plt.savefig(os.path.join(save_dir, 'colored_traces{}.png'.format(j)))
+        plt.savefig(os.path.join(save_dir, 'comps{}-{}'.format(
+            comp_slice[0], comp_slice[-1])))
     return
 
 
