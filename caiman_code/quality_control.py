@@ -29,8 +29,8 @@ def load_results(results_dir):
 
 
 def play_movie_custom(
-        estimates, imgs, q_max=99.75, q_min=2, magnification=1,
-        include_bck=True, frame_range=slice(None, None, None),
+        estimates, imgs, n_comps_per_slice=12, q_max=99.75, q_min=2,
+        magnification=1, include_bck=True, frame_range=slice(None, None, None),
         save_dir=None, movie_name='results_movie.avi', cmap='hsv',
         colors_name='results_movie_colors.npy', gain_color=4, gain_bck=0.2):
     """Adapted from caiman/source_extraction/cnmf/estimates.py for 3D video."""
@@ -45,75 +45,87 @@ def play_movie_custom(
         cols_c = np.load(cols_c_fn)
     else:
         cols_c = plt.get_cmap(cmap)(np.linspace(
-            0, 1, estimates.C.shape[0]))[:, np.newaxis, :-1] * gain_color
+            0, 1, n_comps_per_slice))[:, np.newaxis, :-1] * gain_color
         if save_dir:
             np.save(cols_c_fn, cols_c)
 
-    cs = np.expand_dims(estimates.C[:, frame_range], -1) * cols_c
-    y_rec_color = np.tensordot(estimates.A.toarray(), cs, axes=(1, 0))
-    y_rec_color = y_rec_color.reshape(dims + (-1, 3), order='F')
-    y_rec_color = np.moveaxis(y_rec_color, -2, 0)
+    for j in range(int(np.ceil(estimates.C.shape[0] / n_comps_per_slice))):
+        slice_dir = os.path.join(save_dir, 'slice{}'.format(j))
+        if not os.path.exists(slice_dir):
+            os.makedirs(slice_dir)
+        comp_slice = [val for val in range(j * n_comps_per_slice, (
+                j + 1) * n_comps_per_slice) if val < len(
+            estimates.idx_components)]
+        estimates.select_components(idx_components=comp_slice)
 
-    ac = estimates.A.dot(estimates.C[:, frame_range])
-    y_rec = ac.reshape(dims + (-1,), order='F')
-    y_rec = np.moveaxis(y_rec, -1, 0)
-    if estimates.W is not None:
-        ssub_b = int(round(np.sqrt(np.prod(dims) / estimates.W.shape[0])))
-        b = imgs.reshape((-1, np.prod(dims)), order='F').T - ac
-        if ssub_b == 1:
-            b = estimates.b0[:, None] + estimates.W.dot(
-                b - estimates.b0[:, None])
+        cs = np.expand_dims(estimates.C[:, frame_range], -1) * cols_c
+        y_rec_color = np.tensordot(estimates.A.toarray(), cs, axes=(1, 0))
+        y_rec_color = y_rec_color.reshape(dims + (-1, 3), order='F')
+        y_rec_color = np.moveaxis(y_rec_color, -2, 0)
+
+        ac = estimates.A.dot(estimates.C[:, frame_range])
+        y_rec = ac.reshape(dims + (-1,), order='F')
+        y_rec = np.moveaxis(y_rec, -1, 0)
+        if estimates.W is not None:
+            ssub_b = int(round(np.sqrt(np.prod(dims) / estimates.W.shape[0])))
+            b = imgs.reshape((-1, np.prod(dims)), order='F').T - ac
+            if ssub_b == 1:
+                b = estimates.b0[:, None] + estimates.W.dot(
+                    b - estimates.b0[:, None])
+            else:
+                wb = estimates.W.dot(
+                    downscale(b.reshape(dims + (b.shape[-1],), order='F'),
+                              (ssub_b, ssub_b, 1)).reshape((-1, b.shape[-1]),
+                                                           order='F'))
+                wb0 = estimates.W.dot(downscale(estimates.b0.reshape(
+                    dims, order='F'), (ssub_b, ssub_b)).reshape(
+                    (-1, 1), order='F'))
+                b = estimates.b0.flatten('F')[:, None] + (np.repeat(np.repeat(
+                    (wb - wb0).reshape(((dims[0] - 1) // ssub_b + 1,
+                                        (dims[1] - 1) // ssub_b + 1, -1),
+                                       order='F'),
+                    ssub_b, 0), ssub_b, 1)[:dims[0], :dims[1]].reshape(
+                    (-1, b.shape[-1]), order='F'))
+            b = b.reshape(dims + (-1,), order='F')
+            b = np.moveaxis(b, -1, 0)
+        elif estimates.b is not None and estimates.f is not None:
+            b = estimates.b.dot(estimates.f[:, frame_range])
+            if 'matrix' in str(type(b)):
+                b = b.toarray()
+            b = b.reshape(dims + (-1,), order='F')
+            b = np.moveaxis(b, -1, 0)
         else:
-            wb = estimates.W.dot(
-                downscale(b.reshape(dims + (b.shape[-1],), order='F'),
-                          (ssub_b, ssub_b, 1)).reshape((-1, b.shape[-1]),
-                                                       order='F'))
-            wb0 = estimates.W.dot(downscale(estimates.b0.reshape(
-                dims, order='F'), (ssub_b, ssub_b)).reshape(
-                (-1, 1), order='F'))
-            b = estimates.b0.flatten('F')[:, None] + (np.repeat(np.repeat(
-                (wb - wb0).reshape(((dims[0] - 1) // ssub_b + 1,
-                                    (dims[1] - 1) // ssub_b + 1, -1),
-                                   order='F'),
-                ssub_b, 0), ssub_b, 1)[:dims[0], :dims[1]].reshape(
-                (-1, b.shape[-1]), order='F'))
-        b = b.reshape(dims + (-1,), order='F')
-        b = np.moveaxis(b, -1, 0)
-    elif estimates.b is not None and estimates.f is not None:
-        b = estimates.b.dot(estimates.f[:, frame_range])
-        if 'matrix' in str(type(b)):
-            b = b.toarray()
-        b = b.reshape(dims + (-1,), order='F')
-        b = np.moveaxis(b, -1, 0)
-    else:
-        b = np.zeros_like(y_rec)
+            b = np.zeros_like(y_rec)
 
-    imgs_by_z = [np.squeeze(arr) for arr in np.split(
-        imgs, min(imgs.shape), axis=int(np.argmin(imgs.shape)))]
-    y_rec_by_z = [np.squeeze(arr) for arr in np.split(
-        y_rec, min(y_rec.shape), axis=int(np.argmin(y_rec.shape)))]
-    b_by_z = [np.squeeze(arr) for arr in np.split(
-        b, min(b.shape), axis=int(np.argmin(b.shape)))]
-    y_rec_color_1z = [np.squeeze(arr) for arr in np.split(
-        y_rec_color, min(y_rec_color.shape[:-1]), axis=int(np.argmin(
-            y_rec_color.shape[:-1])))]
+        imgs_by_z = [np.squeeze(arr) for arr in np.split(
+            imgs, min(imgs.shape), axis=int(np.argmin(imgs.shape)))]
+        y_rec_by_z = [np.squeeze(arr) for arr in np.split(
+            y_rec, min(y_rec.shape), axis=int(np.argmin(y_rec.shape)))]
+        b_by_z = [np.squeeze(arr) for arr in np.split(
+            b, min(b.shape), axis=int(np.argmin(b.shape)))]
+        y_rec_color_1z = [np.squeeze(arr) for arr in np.split(
+            y_rec_color, min(y_rec_color.shape[:-1]), axis=int(np.argmin(
+                y_rec_color.shape[:-1])))]
 
-    for i, (imgs_1z, y_rec_1z, y_rec_color_1z, b_1z) in enumerate(zip(
-            imgs_by_z, y_rec_by_z, y_rec_color_1z, b_by_z)):
-        per_i = movie_name.index('.')
-        movie_fn = '{}_z{}{}'.format(movie_name[:per_i], i, movie_name[per_i:])
-        movie_fn_full_path = os.path.join(save_dir, movie_fn)
+        for i, (imgs_1z, y_rec_1z, y_rec_color_1z, b_1z) in enumerate(zip(
+                imgs_by_z, y_rec_by_z, y_rec_color_1z, b_by_z)):
+            per_i = movie_name.index('.')
+            movie_fn = '{}_z{}{}'.format(movie_name[:per_i], i, movie_name[per_i:])
+            movie_fn_full_path = os.path.join(slice_dir, movie_fn)
 
-        if not os.path.exists(movie_fn_full_path):
-            mov = caiman.concatenate((np.repeat(np.expand_dims(
-                imgs_1z - (not include_bck) * b_1z, -1), 3, 3),
-                y_rec_color_1z + include_bck * np.expand_dims(
-                    b_1z * gain_bck, -1)), axis=2)
+            if not os.path.exists(movie_fn_full_path):
+                mov = caiman.concatenate((np.repeat(np.expand_dims(
+                    imgs_1z - (not include_bck) * b_1z, -1), 3, 3),
+                    y_rec_color_1z + include_bck * np.expand_dims(
+                        b_1z * gain_bck, -1)), axis=2)
 
-            mov.play(q_min=q_min, q_max=q_max, magnification=magnification,
-                     save_movie=bool(save_dir), movie_name=movie_fn_full_path)
+                mov.play(q_min=q_min, q_max=q_max, magnification=magnification,
+                         save_movie=bool(slice_dir),
+                         movie_name=movie_fn_full_path)
 
-            del mov
+                del mov
+
+        estimates.restore_discarded_components()
     return cols_c
 
 
