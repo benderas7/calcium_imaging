@@ -135,8 +135,9 @@ def play_movie_custom(
         if not os.path.exists(slice_dir):
             os.makedirs(slice_dir)
 
-        _movie_one_slice(estimates, comp_slice, cols_c, dims, imgs,
-                         frame_range, slice_dir)
+        if not len(os.listdir(slice_dir)) >= imgs.shape[-1]:
+            _movie_one_slice(estimates, comp_slice, cols_c, dims, imgs,
+                             frame_range, slice_dir)
     return cols_c
 
 
