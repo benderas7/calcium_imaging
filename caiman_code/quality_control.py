@@ -220,6 +220,8 @@ def colored_traces(cnm, imgs, cols_c, save_dir, n_comps_per_slice=12, n_cols=3,
         plt.tight_layout()
         plt.savefig(os.path.join(save_dir, 'comps{}-{}'.format(
             comp_slice[0], comp_slice[-1])))
+
+        cnm.estimates.restore_discarded_components()
     return
 
 
