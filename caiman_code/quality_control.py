@@ -34,7 +34,8 @@ def _movie_one_slice(
         include_bck=True, movie_name='results_movie.avi'):
     estimates.select_components(idx_components=comp_slice)
 
-    cs = np.expand_dims(estimates.C[:, frame_range], -1) * cols_c
+    cs = np.expand_dims(
+        estimates.C[:, frame_range], -1) * cols_c[:estimates.C.shape[0], :, :]
     y_rec_color = np.tensordot(estimates.A.toarray(), cs, axes=(1, 0))
     y_rec_color = y_rec_color.reshape(dims + (-1, 3), order='F')
     y_rec_color = np.moveaxis(y_rec_color, -2, 0)
