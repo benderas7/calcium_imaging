@@ -156,13 +156,14 @@ def stack_movies(movie_dir, n_cols=2):
     file for each set of components."""
     # Load folders for each component set
     comps_dirs = [os.path.join(movie_dir, d) for d in os.listdir(movie_dir) if
-                  os.path.isdir(d)]
+                  os.path.isdir(os.path.join(movie_dir, d))]
 
     for comps_dir in comps_dirs:
         # Load movies
         change_settings({"IMAGEMAGICK_BINARY":
                         "/usr/local/Cellar/imagemagick/7.0.10-23/bin/convert"})
-        files = [f for f in os.listdir(comps_dir) if f.endswith('.avi')]
+        files = [os.path.join(comps_dir, f) for f in os.listdir(comps_dir) if
+                 f.endswith('.avi')]
         clips = []
         for f in files:
             clip = moviepy.VideoFileClip(os.path.join(movie_dir, f))
