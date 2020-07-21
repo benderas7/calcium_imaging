@@ -188,10 +188,15 @@ def stack_movies(movie_dir, n_cols=2):
 
 def colored_traces(cnm, imgs, cols_c, save_dir, n_comps_per_slice=12, n_cols=3,
                    gain_color=4):
-    """Plot and savee traces for each component in color that they are shown
+    """Plot and save traces for each component in color that they are shown
     in the video."""
     # Get total number of components
     n_comps_total = cnm.estimates.C.shape[0]
+
+    # Remove unnecessary dimensions and map values between 0 and 1
+    cols_c = np.squeeze(cols_c)
+    cols_c = cols_c / gain_color
+
     for j in range(int(np.ceil(n_comps_total / n_comps_per_slice))):
         # Select desired components
         comp_slice = [val for val in range(j * n_comps_per_slice, (
@@ -203,13 +208,10 @@ def colored_traces(cnm, imgs, cols_c, save_dir, n_comps_per_slice=12, n_cols=3,
         spat_fp = cnm.estimates.A.toarray().reshape(
             imgs.shape[1:] + (-1,), order='F')
 
-        # Remove unnecessary dimensions and map values between 0 and 1
-        cols_c = np.squeeze(cols_c)
-        cols_c = cols_c / gain_color
-
         # Plot traces
         count = 0
-        fig, axes = plt.subplots(n_comps_per_slice, n_cols, figsize=(15, 10))
+        n_rows = n_comps_per_slice // n_cols
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
         for i, (c, trace) in enumerate(zip(cols_c, traces)):
             axes.flatten()[i].plot(trace, c=c)
             xyz = spat_fp[:, :, :, i]
