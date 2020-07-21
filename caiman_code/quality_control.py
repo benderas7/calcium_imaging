@@ -109,8 +109,8 @@ def _movie_one_slice(
 
 def play_movie_custom(
         estimates, imgs, n_comps_per_slice=12, save_dir=None,
-        cmap='gist_rainbow', frame_range=slice(None, None, None), gain_color=4,
-        colors_name='results_movie_colors.npy'):
+        cmap='gist_rainbow', frame_range=slice(None, None, None),
+        gain_color=16, colors_name='results_movie_colors.npy'):
     """Adapted from caiman/source_extraction/cnmf/estimates.py for 3D video."""
     dims = imgs.shape[1:]
     if 'movie' not in str(type(imgs)):
@@ -187,7 +187,7 @@ def stack_movies(movie_dir, n_cols=2):
 
 
 def colored_traces(cnm, imgs, cols_c, save_dir, n_comps_per_slice=12, n_cols=3,
-                   gain_color=4):
+                   gain_color=16):
     """Plot and save traces for each component in color that they are shown
     in the video."""
     # Get total number of components
