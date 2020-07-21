@@ -108,8 +108,8 @@ def _movie_one_slice(
 
 
 def play_movie_custom(
-        estimates, imgs, n_comps_per_slice=12, save_dir=None, cmap='hsv',
-        frame_range=slice(None, None, None), gain_color=4,
+        estimates, imgs, n_comps_per_slice=12, save_dir=None,
+        cmap='gist_rainbow', frame_range=slice(None, None, None), gain_color=4,
         colors_name='results_movie_colors.npy'):
     """Adapted from caiman/source_extraction/cnmf/estimates.py for 3D video."""
     dims = imgs.shape[1:]
