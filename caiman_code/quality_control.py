@@ -209,10 +209,12 @@ def colored_traces(cnm, imgs, cols_c, save_dir, n_comps_per_slice=12, n_cols=3,
         spat_fp = cnm.estimates.A.toarray().reshape(
             imgs.shape[1:] + (-1,), order='F')
 
-        # Plot traces
+        # Plot traces and center maps
         n_rows = n_comps_per_slice // n_cols
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
+        fig2, ax2 = plt.subplots(figsize=(10, 10))
         for i, (c, trace) in enumerate(zip(cols_c, traces)):
+            # Traces
             axes.flatten()[i].plot(trace, c=c)
             xyz = spat_fp[:, :, :, i]
             axes.flatten()[i].set_title(
@@ -220,9 +222,17 @@ def colored_traces(cnm, imgs, cols_c, save_dir, n_comps_per_slice=12, n_cols=3,
                     count, np.argwhere(np.sum(xyz, axis=(0, 1))).flatten(),
                     [int(val) for val in center_of_mass(xyz)]))
             axes.flatten()[i].set_xlabel('')
+
+            # Center maps
+            ax2.scatter(*center_of_mass(xyz)[:2], c=c)
+            ax2.annotate(count, center_of_mass(xyz)[:2])
+            ax2.set_xlim([0, spat_fp.shape[0]])
+            ax2.set_ylim([0, spat_fp.shape[1]])
             count += 1
         plt.tight_layout()
         plt.savefig(os.path.join(save_dir, 'comps{}-{}'.format(
+            comp_slice[0], comp_slice[-1])))
+        plt.savefig(os.path.join(save_dir, 'comps{}-{}_centers'.format(
             comp_slice[0], comp_slice[-1])))
 
         cnm.estimates.restore_discarded_components()
