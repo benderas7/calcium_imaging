@@ -15,7 +15,7 @@ import caiman_code.funcs as funcs
 from caiman_code.worm import COMPILED_DIR
 
 # Set parameters
-DO_SETS = True
+DO_SETS = False
 #####
 
 
@@ -197,7 +197,7 @@ def make_traces(cnm, imgs, save_dir, cols_c=None, n_comps_per_slice=12,
     n_comps_total = cnm.estimates.C.shape[0]
 
     # Remove unnecessary dimensions and map values between 0 and 1
-    if cols_c:
+    if cols_c is not None:
         cols_c = np.squeeze(cols_c)
         cols_c = cols_c / gain_color
     else:
@@ -219,7 +219,7 @@ def make_traces(cnm, imgs, save_dir, cols_c=None, n_comps_per_slice=12,
         n_rows = n_comps_per_slice // n_cols
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
         fig2, ax2 = None, None
-        if cols_c[0]:
+        if cols_c[0] is not None:
             fig2, ax2 = plt.subplots(figsize=(10, 10))
         for i, (c, trace) in enumerate(zip(cols_c, traces)):
             # Traces
@@ -231,21 +231,24 @@ def make_traces(cnm, imgs, save_dir, cols_c=None, n_comps_per_slice=12,
                     [int(val) for val in center_of_mass(xyz)]))
             axes.flatten()[i].set_xlabel('')
 
-            if c:
+            if c is not None:
                 # Center maps
                 ax2.scatter(*center_of_mass(xyz)[:2], c=c)
                 ax2.annotate(count, center_of_mass(xyz)[:2])
                 ax2.set_xlim([0, spat_fp.shape[0]])
                 ax2.set_ylim([0, spat_fp.shape[1]])
             count += 1
+
+        # Save figures
         fig.tight_layout()
         fig.savefig(os.path.join(save_dir, 'comps{}-{}'.format(
             comp_slice[0], comp_slice[-1])))
-        if cols_c[0]:
+        if cols_c[0] is not None:
             fig2.tight_layout()
             fig2.savefig(os.path.join(save_dir, 'comps{}-{}_centers'.format(
                 comp_slice[0], comp_slice[-1])))
 
+        # Restore components
         cnm.estimates.restore_discarded_components()
     return
 
@@ -273,6 +276,7 @@ def main(do_sets=DO_SETS, results_dir=COMPILED_DIR):
         traces_dir = os.path.join(results_dir, 'traces_sets')
         if not os.path.exists(traces_dir):
             os.makedirs(traces_dir)
+        make_traces(cnm, imgs, traces_dir, cols_c=cols_c)
     else:
         # Make movie for each component of z stack with largest area
         movie_dir = os.path.join(results_dir, 'movies_each_comp')
