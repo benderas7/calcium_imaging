@@ -82,7 +82,7 @@ def motion_corr(fnames, dview, opts, disp_movie, is_3d=False):
 
 
 def load_memmap(fname_new):
-    # Load the file with framees in python format (T x X x Y)
+    # Load the file with frames in python format (T x X x Y)
     yr, dims, t = cm.load_memmap(fname_new)
     images = np.reshape(yr.T, [t] + list(dims), order='F')
     return images
