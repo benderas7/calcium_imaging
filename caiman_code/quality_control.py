@@ -15,6 +15,7 @@ import caiman_code.funcs as funcs
 from caiman_code.worm import COMPILED_DIR
 
 # Set parameters
+DO_SETS = False
 #####
 
 
@@ -240,22 +241,23 @@ def colored_traces(cnm, imgs, cols_c, save_dir, n_comps_per_slice=12, n_cols=3,
     return
 
 
-def main(results_dir=COMPILED_DIR):
+def main(do_sets=DO_SETS, results_dir=COMPILED_DIR):
     # Load results
     cnm = load_results(results_dir)
 
-    # Make movie
-    movie_dir = os.path.join(results_dir, 'movies')
-    if not os.path.exists(movie_dir):
-        os.makedirs(movie_dir)
-    cols_c, imgs = make_movie(cnm, movie_dir)
-    stack_movies(movie_dir)
+    if do_sets:
+        # Make movie
+        movie_dir = os.path.join(results_dir, 'movies')
+        if not os.path.exists(movie_dir):
+            os.makedirs(movie_dir)
+        cols_c, imgs = make_movie(cnm, movie_dir)
+        stack_movies(movie_dir)
 
-    # Make traces for each component colored as in video
-    traces_dir = os.path.join(results_dir, 'traces')
-    if not os.path.exists(traces_dir):
-        os.makedirs(traces_dir)
-    colored_traces(cnm, imgs, cols_c, traces_dir)
+        # Make traces for each component colored as in video
+        traces_dir = os.path.join(results_dir, 'traces')
+        if not os.path.exists(traces_dir):
+            os.makedirs(traces_dir)
+        colored_traces(cnm, imgs, cols_c, traces_dir)
     return
 
 
