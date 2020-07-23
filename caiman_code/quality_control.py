@@ -8,6 +8,7 @@ from caiman.source_extraction.cnmf.initialization import downscale
 import caiman
 import numpy as np
 from scipy.ndimage import center_of_mass
+from skimage.segmentation import find_boundaries, mark_boundaries
 import matplotlib.pyplot as plt
 from moviepy.config import change_settings
 import moviepy.editor as moviepy
@@ -108,7 +109,7 @@ def _movie_one_slice(
     return
 
 
-def play_movie_custom(
+def _play_movie_custom(
         estimates, imgs, n_comps_per_slice=12, save_dir=None,
         cmap='gist_rainbow', frame_range=slice(None, None, None),
         gain_color=16, colors_name='results_movie_colors.npy'):
@@ -142,20 +143,8 @@ def play_movie_custom(
     return cols_c
 
 
-def make_movie_comp_sets(cnm, save_dir):
-    """Make movies with a set of components colored and imaged for all z
-    stacks."""
-    # Get images from load memmap
-    imgs = funcs.load_memmap(cnm.mmap_file)
-
-    # Make video for each ROI
-    cols_c = play_movie_custom(
-        cnm.estimates, imgs, save_dir=save_dir)
-    return cols_c, imgs
-
-
-def stack_movies(movie_dir, n_cols=2):
-    """Stack movies from different z-stacks and integrate into one movie
+def _stack_movies(movie_dir, n_cols=2):
+    """Stack movies from different z-slices and integrate into one movie
     file for each set of components."""
     # Load folders for each component set
     comps_dirs = [os.path.join(movie_dir, d) for d in os.listdir(movie_dir) if
@@ -187,6 +176,21 @@ def stack_movies(movie_dir, n_cols=2):
         if not os.path.exists(comp_fn):
             composite.write_videofile(comp_fn)
     return
+
+
+def make_movie_comp_sets(cnm, save_dir):
+    """Make movies with a set of components colored and imaged for all z
+    slices."""
+    # Get images from load memmap
+    imgs = funcs.load_memmap(cnm.mmap_file)
+
+    # Make video for each ROI
+    cols_c = _play_movie_custom(
+        cnm.estimates, imgs, save_dir=save_dir)
+
+    # Stack movies from separate z slices to make composite movie
+    _stack_movies(save_dir)
+    return cols_c, imgs
 
 
 def make_traces(cnm, imgs, save_dir, cols_c=None, n_comps_per_slice=12,
@@ -254,7 +258,7 @@ def make_traces(cnm, imgs, save_dir, cols_c=None, n_comps_per_slice=12,
 
 
 def make_movie_each_comp(cnm, save_dir):
-    """Make movie for each component of z stack with largest area."""
+    """Make movie for each component of z slice with largest area."""
     # Get images from load memmap
     imgs = funcs.load_memmap(cnm.mmap_file)
     return imgs
@@ -265,12 +269,11 @@ def main(do_sets=DO_SETS, results_dir=COMPILED_DIR):
     cnm = load_results(results_dir)
 
     if do_sets:
-        # Make movie with colored sets of components for all z stacks
+        # Make movie with colored sets of components for all z slices
         movie_dir = os.path.join(results_dir, 'movies_sets')
         if not os.path.exists(movie_dir):
             os.makedirs(movie_dir)
         cols_c, imgs = make_movie_comp_sets(cnm, movie_dir)
-        stack_movies(movie_dir)
 
         # Make traces for each component
         traces_dir = os.path.join(results_dir, 'traces_sets')
@@ -278,7 +281,7 @@ def main(do_sets=DO_SETS, results_dir=COMPILED_DIR):
             os.makedirs(traces_dir)
         make_traces(cnm, imgs, traces_dir, cols_c=cols_c)
     else:
-        # Make movie for each component of z stack with largest area
+        # Make movie for each component of z slice with largest area
         movie_dir = os.path.join(results_dir, 'movies_each_comp')
         if not os.path.exists(movie_dir):
             os.makedirs(movie_dir)
