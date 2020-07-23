@@ -15,7 +15,7 @@ import caiman_code.funcs as funcs
 from caiman_code.worm import COMPILED_DIR
 
 # Set parameters
-DO_SETS = False
+DO_SETS = True
 #####
 
 
@@ -142,7 +142,9 @@ def play_movie_custom(
     return cols_c
 
 
-def make_movie(cnm, save_dir):
+def make_movie_comp_sets(cnm, save_dir):
+    """Make movies with a set of components colored and imaged for all z
+    stacks."""
     # Get images from load memmap
     imgs = funcs.load_memmap(cnm.mmap_file)
 
@@ -187,8 +189,8 @@ def stack_movies(movie_dir, n_cols=2):
     return
 
 
-def colored_traces(cnm, imgs, save_dir, cols_c=None, n_comps_per_slice=12,
-                   n_cols=3, gain_color=16):
+def make_traces(cnm, imgs, save_dir, cols_c=None, n_comps_per_slice=12,
+                n_cols=3, gain_color=16):
     """Plot and save traces for each component in color that they are shown
     in the video."""
     # Get total number of components
@@ -216,7 +218,9 @@ def colored_traces(cnm, imgs, save_dir, cols_c=None, n_comps_per_slice=12,
         # Plot traces and center maps
         n_rows = n_comps_per_slice // n_cols
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
-        fig2, ax2 = plt.subplots(figsize=(10, 10))
+        fig2, ax2 = None, None
+        if cols_c[0]:
+            fig2, ax2 = plt.subplots(figsize=(10, 10))
         for i, (c, trace) in enumerate(zip(cols_c, traces)):
             # Traces
             axes.flatten()[i].plot(trace, c=c)
@@ -227,25 +231,30 @@ def colored_traces(cnm, imgs, save_dir, cols_c=None, n_comps_per_slice=12,
                     [int(val) for val in center_of_mass(xyz)]))
             axes.flatten()[i].set_xlabel('')
 
-            # Center maps
-            ax2.scatter(*center_of_mass(xyz)[:2], c=c)
-            ax2.annotate(count, center_of_mass(xyz)[:2])
-            ax2.set_xlim([0, spat_fp.shape[0]])
-            ax2.set_ylim([0, spat_fp.shape[1]])
+            if c:
+                # Center maps
+                ax2.scatter(*center_of_mass(xyz)[:2], c=c)
+                ax2.annotate(count, center_of_mass(xyz)[:2])
+                ax2.set_xlim([0, spat_fp.shape[0]])
+                ax2.set_ylim([0, spat_fp.shape[1]])
             count += 1
         fig.tight_layout()
-        fig2.tight_layout()
         fig.savefig(os.path.join(save_dir, 'comps{}-{}'.format(
             comp_slice[0], comp_slice[-1])))
-        fig2.savefig(os.path.join(save_dir, 'comps{}-{}_centers'.format(
-            comp_slice[0], comp_slice[-1])))
+        if cols_c[0]:
+            fig2.tight_layout()
+            fig2.savefig(os.path.join(save_dir, 'comps{}-{}_centers'.format(
+                comp_slice[0], comp_slice[-1])))
 
         cnm.estimates.restore_discarded_components()
     return
 
 
-def make_movie_each_comp():
-    return
+def make_movie_each_comp(cnm, save_dir):
+    """Make movie for each component of z stack with largest area."""
+    # Get images from load memmap
+    imgs = funcs.load_memmap(cnm.mmap_file)
+    return imgs
 
 
 def main(do_sets=DO_SETS, results_dir=COMPILED_DIR):
@@ -253,20 +262,29 @@ def main(do_sets=DO_SETS, results_dir=COMPILED_DIR):
     cnm = load_results(results_dir)
 
     if do_sets:
-        # Make movie
+        # Make movie with colored sets of components for all z stacks
         movie_dir = os.path.join(results_dir, 'movies_sets')
         if not os.path.exists(movie_dir):
             os.makedirs(movie_dir)
-        cols_c, imgs = make_movie(cnm, movie_dir)
+        cols_c, imgs = make_movie_comp_sets(cnm, movie_dir)
         stack_movies(movie_dir)
-    else:
-        cols_c = None
 
-    # Make traces for each component
-    traces_dir = os.path.join(results_dir, 'traces')
-    if not os.path.exists(traces_dir):
-        os.makedirs(traces_dir)
-    colored_traces(cnm, imgs, traces_dir, cols_c=cols_c)
+        # Make traces for each component
+        traces_dir = os.path.join(results_dir, 'traces_sets')
+        if not os.path.exists(traces_dir):
+            os.makedirs(traces_dir)
+    else:
+        # Make movie for each component of z stack with largest area
+        movie_dir = os.path.join(results_dir, 'movies_each_comp')
+        if not os.path.exists(movie_dir):
+            os.makedirs(movie_dir)
+        imgs = make_movie_each_comp(cnm, movie_dir)
+
+        # Make traces for each component
+        traces_dir = os.path.join(results_dir, 'traces_each_comp')
+        if not os.path.exists(traces_dir):
+            os.makedirs(traces_dir)
+        make_traces(cnm, imgs, traces_dir)
     return
 
 
