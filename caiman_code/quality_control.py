@@ -187,16 +187,19 @@ def stack_movies(movie_dir, n_cols=2):
     return
 
 
-def colored_traces(cnm, imgs, cols_c, save_dir, n_comps_per_slice=12, n_cols=3,
-                   gain_color=16):
+def colored_traces(cnm, imgs, save_dir, cols_c=None, n_comps_per_slice=12,
+                   n_cols=3, gain_color=16):
     """Plot and save traces for each component in color that they are shown
     in the video."""
     # Get total number of components
     n_comps_total = cnm.estimates.C.shape[0]
 
     # Remove unnecessary dimensions and map values between 0 and 1
-    cols_c = np.squeeze(cols_c)
-    cols_c = cols_c / gain_color
+    if cols_c:
+        cols_c = np.squeeze(cols_c)
+        cols_c = cols_c / gain_color
+    else:
+        cols_c = [None] * n_comps_per_slice
 
     count = 0
     for j in range(int(np.ceil(n_comps_total / n_comps_per_slice))):
@@ -241,23 +244,29 @@ def colored_traces(cnm, imgs, cols_c, save_dir, n_comps_per_slice=12, n_cols=3,
     return
 
 
+def make_movie_each_comp():
+    return
+
+
 def main(do_sets=DO_SETS, results_dir=COMPILED_DIR):
     # Load results
     cnm = load_results(results_dir)
 
     if do_sets:
         # Make movie
-        movie_dir = os.path.join(results_dir, 'movies')
+        movie_dir = os.path.join(results_dir, 'movies_sets')
         if not os.path.exists(movie_dir):
             os.makedirs(movie_dir)
         cols_c, imgs = make_movie(cnm, movie_dir)
         stack_movies(movie_dir)
+    else:
+        cols_c = None
 
-        # Make traces for each component colored as in video
-        traces_dir = os.path.join(results_dir, 'traces')
-        if not os.path.exists(traces_dir):
-            os.makedirs(traces_dir)
-        colored_traces(cnm, imgs, cols_c, traces_dir)
+    # Make traces for each component
+    traces_dir = os.path.join(results_dir, 'traces')
+    if not os.path.exists(traces_dir):
+        os.makedirs(traces_dir)
+    colored_traces(cnm, imgs, traces_dir, cols_c=cols_c)
     return
 
 
