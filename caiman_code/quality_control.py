@@ -229,10 +229,11 @@ def colored_traces(cnm, imgs, cols_c, save_dir, n_comps_per_slice=12, n_cols=3,
             ax2.set_xlim([0, spat_fp.shape[0]])
             ax2.set_ylim([0, spat_fp.shape[1]])
             count += 1
-        plt.tight_layout()
-        plt.savefig(os.path.join(save_dir, 'comps{}-{}'.format(
+        fig.tight_layout()
+        fig2.tight_layout()
+        fig.savefig(os.path.join(save_dir, 'comps{}-{}'.format(
             comp_slice[0], comp_slice[-1])))
-        plt.savefig(os.path.join(save_dir, 'comps{}-{}_centers'.format(
+        fig2.savefig(os.path.join(save_dir, 'comps{}-{}_centers'.format(
             comp_slice[0], comp_slice[-1])))
 
         cnm.estimates.restore_discarded_components()
