@@ -7,6 +7,7 @@ from PIL import Image
 import numpy as np
 import h5py
 from tifffile import imsave, imread
+import matplotlib.pyplot as plt
 
 # Logging parameters
 LOG = True
@@ -17,6 +18,7 @@ LOG_LEVEL = logging.WARNING
 IMG_DIR = '/Users/benderas/NeuroPAL/Test'
 COMPILED_DIR = '/Users/benderas/NeuroPAL/Compiled/Test'
 ARR_FORMAT = '.h5'
+CROP = True
 TIME_IT = True
 DO_COMP_EVAL = False
 
@@ -54,8 +56,8 @@ DEFINED_OPTS = {
 ######
 
 
-def compile_imgs_to_arr(img_dir, compiled_dir, arr_format, t_char='t',
-                        z_char='z'):
+def compile_imgs_to_arr(img_dir, compiled_dir, arr_format, crop=False,
+                        t_char='t', z_char='z'):
     # Determine array file name from img_dir
     arr_fn = os.path.join(compiled_dir, '{}{}'.format(
         img_dir.split('/')[-1], arr_format))
@@ -92,6 +94,25 @@ def compile_imgs_to_arr(img_dir, compiled_dir, arr_format, t_char='t',
         assert np.sum(arr[t-1, :, :, z-1]) == 0
         arr[t-1, :, :, z-1] = img
 
+    # Crop image if desired
+    if crop:
+        plt.imshow(np.mean(arr, axis=(0, 3)))
+        plt.grid()
+        plt.savefig('a.png')
+        left_crop = int(input('Enter desired crop location (inclusive) in '
+                              'pixels for crop from left: '))
+        right_crop = int(input('Enter desired crop location (exclusive) in '
+                               'pixels for crop from right: '))
+        top_crop = int(input('Enter desired crop location (inclusive) in '
+                             'pixels for crop from top: '))
+        bottom_crop = int(input('Enter desired crop location (exclusive) in '
+                                'pixels for crop from bottom: '))
+        arr = arr[:, top_crop:bottom_crop, left_crop:right_crop, :]
+        plt.imshow(np.mean(arr, axis=(0, 3)))
+        plt.grid()
+        plt.savefig('b.png')
+        pass
+
     # Make sure save folder exists
     if not os.path.exists(compiled_dir):
         os.makedirs(compiled_dir)
@@ -111,10 +132,10 @@ def compile_imgs_to_arr(img_dir, compiled_dir, arr_format, t_char='t',
 def run(opts_dict, img_dir=IMG_DIR, arr_format=ARR_FORMAT, log=LOG,
         log_fn=LOG_FN, log_level=LOG_LEVEL, fr=FR, decay_time=DECAY_TIME,
         compiled_dir=COMPILED_DIR, do_comp_eval=DO_COMP_EVAL, is_3d=IS_3D,
-        time_it=TIME_IT):
+        time_it=TIME_IT, crop=CROP):
     # Compile images into array
     video_fn, arr_shape = compile_imgs_to_arr(
-        img_dir, compiled_dir, arr_format)
+        img_dir, compiled_dir, arr_format, crop=crop)
 
     # Run pipeline
     caiman_code.funcs.pipeline(
