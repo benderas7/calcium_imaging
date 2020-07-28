@@ -94,11 +94,17 @@ def compile_imgs_to_arr(img_dir, compiled_dir, arr_format, crop=False,
         assert np.sum(arr[t-1, :, :, z-1]) == 0
         arr[t-1, :, :, z-1] = img
 
+    # Make sure save folder exists
+    if not os.path.exists(compiled_dir):
+        os.makedirs(compiled_dir)
+
     # Crop image if desired
     if crop:
-        plt.imshow(np.mean(arr, axis=(0, 3)))
-        plt.grid()
-        plt.savefig('a.png')
+        fig, axes = plt.subplots(1, 2, figsize=(12, 8))
+        axes[0].imshow(np.mean(arr, axis=(0, 3)))
+        axes[0].grid()
+        axes[0].set_title('Pre-Crop')
+        fig.savefig(os.path.join(compiled_dir, 'cropping.png'))
         left_crop = int(input('Enter desired crop location (inclusive) in '
                               'pixels for crop from left: '))
         right_crop = int(input('Enter desired crop location (exclusive) in '
@@ -108,14 +114,9 @@ def compile_imgs_to_arr(img_dir, compiled_dir, arr_format, crop=False,
         bottom_crop = int(input('Enter desired crop location (exclusive) in '
                                 'pixels for crop from bottom: '))
         arr = arr[:, top_crop:bottom_crop, left_crop:right_crop, :]
-        plt.imshow(np.mean(arr, axis=(0, 3)))
-        plt.grid()
-        plt.savefig('b.png')
-        pass
-
-    # Make sure save folder exists
-    if not os.path.exists(compiled_dir):
-        os.makedirs(compiled_dir)
+        axes[1].imshow(np.mean(arr, axis=(0, 3)))
+        axes[1].set_title('Post-Crop')
+        fig.savefig(os.path.join(compiled_dir, 'cropping.png'))
 
     # Save array
     if '.h5' in arr_fn:
