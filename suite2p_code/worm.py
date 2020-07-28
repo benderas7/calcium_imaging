@@ -14,6 +14,7 @@ LOG_LEVEL = logging.WARNING
 
 # Data and data display parameters
 IMG_DIR = '/Users/benderas/NeuroPAL/Test'
+CAIMAN_DIR = '/Users/benderas/NeuroPAL/Compiled/Test'
 COMPILED_DIR = '/Users/benderas/NeuroPAL/Compiled/Test2'
 ARR_FORMAT = '.h5'
 
@@ -77,10 +78,38 @@ def compile_imgs_to_arr(img_dir, compiled_dir, arr_format, t_char='t',
     return arr_fn, arr.shape
 
 
-def main(img_dir=IMG_DIR, arr_format=ARR_FORMAT, compiled_dir=COMPILED_DIR):
-    # Compile images into array
-    video_fn, arr_shape = compile_imgs_to_arr(
-        img_dir, compiled_dir, arr_format)
+def adapt_caiman_h5(caiman_dir, img_dir, compiled_dir):
+    # Extract array from CaImAn h5
+    h5 = [os.path.join(caiman_dir, f) for f in os.listdir(caiman_dir) if
+          f.endswith('.h5')][0]
+    with h5py.File(h5, 'r') as f:
+        arr = np.array(f[list(f.keys())[0]])
+
+    # Move z axis to make array compatible with suite2p
+    arr = np.moveaxis(arr, 3, 1)
+
+    # Make compiled dir if necessary
+    if not os.path.exists(compiled_dir):
+        os.makedirs(compiled_dir)
+
+    # Save array
+    arr_fn = os.path.join(compiled_dir, '{}.h5'.format(
+        img_dir.split('/')[-1]))
+    h5f = h5py.File(arr_fn, 'w')
+    h5f.create_dataset('data', data=arr)
+    h5f.close()
+    print('Saved array with shape: {} as {}'.format(arr.shape, arr_fn))
+    return
+
+
+def main(img_dir=IMG_DIR, arr_format=ARR_FORMAT, compiled_dir=COMPILED_DIR,
+         caiman_dir=CAIMAN_DIR):
+    if not caiman_dir:
+        # Compile images into array
+        compile_imgs_to_arr(img_dir, compiled_dir, arr_format)
+        return
+
+    adapt_caiman_h5(caiman_dir, img_dir, compiled_dir)
     return
 
 
