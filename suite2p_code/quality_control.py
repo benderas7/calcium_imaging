@@ -48,30 +48,33 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
 
     for i, (stat_one_comp, F_one_comp) in enumerate(
             zip(res['stat'], res['F'])):
-        # Get spatial footprint for component
-        spat_fp = np.zeros(arr.shape[1:], dtype=np.int8)
-        for x, y in zip(stat_one_comp['xpix'], stat_one_comp['ypix']):
-            spat_fp[y, x] = 1
+        # Make filename for video
+        vid_fn = os.path.join(save_dir, 'comp{}.avi'.format(i))
 
-        # Modulate range of video between min and max of component
-        roi_min = np.min(arr[:, spat_fp > 0])
-        roi_max = np.max(arr[:, spat_fp > 0])
-        arr_one_comp = (arr - roi_min) / (roi_max - roi_min)
-        arr_one_comp[arr_one_comp > 1] = 1
-        arr_one_comp[arr_one_comp < 0] = 0
+        if not os.path.exists(vid_fn):
+            # Get spatial footprint for component
+            spat_fp = np.zeros(arr.shape[1:], dtype=np.int8)
+            for x, y in zip(stat_one_comp['xpix'], stat_one_comp['ypix']):
+                spat_fp[y, x] = 1
 
-        # Draw boundary around component in video
-        bound = find_boundaries(spat_fp, mode='inner')
-        video_bound = [mark_boundaries(f, bound) for f in arr_one_comp]
+            # Modulate range of video between min and max of component
+            roi_min = np.min(arr[:, spat_fp > 0])
+            roi_max = np.max(arr[:, spat_fp > 0])
+            arr_one_comp = (arr - roi_min) / (roi_max - roi_min)
+            arr_one_comp[arr_one_comp > 1] = 1
+            arr_one_comp[arr_one_comp < 0] = 0
 
-        # Save video
-        fps = len(video_bound) // 60
-        video = VideoWriter(os.path.join(save_dir, 'comp{}.avi'.format(
-            i)), VideoWriter_fourcc(*'MJPG'), fps, video_bound[0].shape[
-            :-1][::-1])
-        for frame in video_bound:
-            video.write((frame * 255).astype(np.uint8))
-        video.release()
+            # Draw boundary around component in video
+            bound = find_boundaries(spat_fp, mode='inner')
+            video_bound = [mark_boundaries(f, bound) for f in arr_one_comp]
+
+            # Save video
+            fps = len(video_bound) // 60
+            video = VideoWriter(vid_fn, VideoWriter_fourcc(*'MJPG'), fps,
+                                video_bound[0].shape[:-1][::-1])
+            for frame in video_bound:
+                video.write((frame * 255).astype(np.uint8))
+            video.release()
     return arr
 
 
