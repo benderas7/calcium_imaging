@@ -8,6 +8,7 @@ from scipy.ndimage import center_of_mass
 from skimage.segmentation import find_boundaries, mark_boundaries
 import matplotlib.pyplot as plt
 from cv2 import VideoWriter, VideoWriter_fourcc
+from skimage import io
 
 # Set constants
 DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/Test2/suite2p'
@@ -18,18 +19,60 @@ def get_plane_dirs(data_dir=DATA_DIR):
     # Get directory for each plane
     plane_dirs = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if
                   os.path.isdir(os.path.join(data_dir, f)) and 'plane' in f]
-    return plane_dirs
+    return sorted(plane_dirs)
 
 
-def load_results_one_plane(data_dir):
+def load_results_one_plane(plane_dir):
     # Get all .npy files in data directory
-    files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if
+    files = [os.path.join(plane_dir, f) for f in os.listdir(plane_dir) if
              f.endswith('.npy')]
 
     # Load all results
     res = {f.split('/')[-1].split('.')[0]: np.load(f, allow_pickle=True) for f
            in files}
     return res
+
+
+def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
+                                   save_dir_name='movies'):
+    """Make movie for each component."""
+    # Make directories to save videos if necessary
+    save_dir = os.path.join(plane_dir, save_dir_name)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    # Get array of motion-corrected frames
+    tif_dir = os.path.join(plane_dir, tif_dir_name)
+    tif_fns = sorted(os.path.join(tif_dir, f) for f in os.listdir(tif_dir))
+    arr = np.concatenate([np.array(io.imread(tif)) for tif in tif_fns])
+
+    for i, (stat_one_comp, F_one_comp) in enumerate(
+            zip(res['stat'], res['F'])):
+        # Get spatial footprint for component
+        spat_fp = np.zeros(arr.shape[1:], dtype=np.int8)
+        for x, y in zip(stat_one_comp['xpix'], stat_one_comp['ypix']):
+            spat_fp[y, x] = 1
+
+        # Modulate range of video between min and max of component
+        roi_min = np.min(arr[:, spat_fp > 0])
+        roi_max = np.max(arr[:, spat_fp > 0])
+        arr_one_comp = (arr - roi_min) / (roi_max - roi_min)
+        arr_one_comp[arr_one_comp > 1] = 1
+        arr_one_comp[arr_one_comp < 0] = 0
+
+        # Draw boundary around component in video
+        bound = find_boundaries(spat_fp, mode='inner')
+        video_bound = [mark_boundaries(f, bound) for f in arr_one_comp]
+
+        # Save video
+        fps = len(video_bound) // 60
+        video = VideoWriter(os.path.join(save_dir, 'comp{}.avi'.format(
+            i)), VideoWriter_fourcc(*'MJPG'), fps, video_bound[0].shape[
+            :-1][::-1])
+        for frame in video_bound:
+            video.write((frame * 255).astype(np.uint8))
+        video.release()
+    return arr
 
 
 def make_traces_one_plane(cnm, imgs, save_dir, cols_c=None,
@@ -96,45 +139,6 @@ def make_traces_one_plane(cnm, imgs, save_dir, cols_c=None,
     return
 
 
-def make_movie_each_comp_one_plane(cnm, save_dir):
-    """Make movie for each component."""
-    plane_dirs =
-    # Get images from load memmap
-    imgs = funcs.load_memmap(cnm.mmap_file)
-
-    # Get spatial footprints
-    spat_fps = cnm.estimates.A.toarray().reshape(
-        imgs.shape[1:] + (-1,), order='F')
-    spat_fps = np.moveaxis(spat_fps, -1, 0)
-
-    for i, spat_fp in enumerate(spat_fps):
-        # Select z slice with largest area for component
-        max_z = np.argmax(np.sum(spat_fp, axis=(0, 1)))
-        spat_fp_max_z = spat_fp[:, :, max_z]
-        imgs_max_z = imgs[:, :, :, max_z]
-
-        # Modulate range of video between min and max of component
-        roi_min = np.min(imgs_max_z[:, spat_fp_max_z > 0])
-        roi_max = np.max(imgs_max_z[:, spat_fp_max_z > 0])
-        imgs_max_z = (imgs_max_z - roi_min) / (roi_max - roi_min)
-        imgs_max_z[imgs_max_z > 1] = 1
-        imgs_max_z[imgs_max_z < 0] = 0
-
-        # Draw boundary around component in video
-        bound = find_boundaries(spat_fp_max_z, mode='inner')
-        video_bound = [mark_boundaries(f, bound) for f in imgs_max_z]
-
-        # Save video
-        fps = len(video_bound) // 60
-        video = VideoWriter(os.path.join(save_dir, 'comp{}_z{}.avi'.format(
-            i, max_z)), VideoWriter_fourcc(*'MJPG'), fps, video_bound[0].shape[
-            :-1][::-1])
-        for frame in video_bound:
-            video.write((frame * 255).astype(np.uint8))
-        video.release()
-    return imgs
-
-
 def main():
     # Get plane directories
     plane_dirs = get_plane_dirs()
@@ -143,8 +147,8 @@ def main():
         # Load all results
         res = load_results_one_plane(plane_dir)
 
-        # # Make movie for each components
-        # make_movie_each_comp_one_plane()
+        # Make movie for each components
+        make_movie_each_comp_one_plane(res, plane_dir)
         #
         # # Make traces for each component
         # make_traces_one_plane()
