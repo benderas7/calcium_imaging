@@ -10,12 +10,18 @@ import matplotlib.pyplot as plt
 from cv2 import VideoWriter, VideoWriter_fourcc
 
 # Set constants
-DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/' \
-           'worm3_gcamp_Out2/suite2p/combined'
+DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/Test2/suite2p'
 ####
 
 
-def load_results(data_dir=DATA_DIR):
+def get_plane_dirs(data_dir=DATA_DIR):
+    # Get directory for each plane
+    plane_dirs = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if
+                  os.path.isdir(os.path.join(data_dir, f)) and 'plane' in f]
+    return plane_dirs
+
+
+def load_results_one_plane(data_dir=DATA_DIR):
     # Get all .npy files in data directory
     files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if
              f.endswith('.npy')]
@@ -26,8 +32,8 @@ def load_results(data_dir=DATA_DIR):
     return res
 
 
-def make_traces(cnm, imgs, save_dir, cols_c=None, n_comps_per_slice=12,
-                n_cols=3, gain_color=16):
+def make_traces_one_plane(cnm, imgs, save_dir, cols_c=None,
+                         n_comps_per_slice=12, n_cols=3, gain_color=16):
     """Plot and save traces for each component in color that they are shown
     in the video."""
     # Get total number of components
@@ -90,8 +96,9 @@ def make_traces(cnm, imgs, save_dir, cols_c=None, n_comps_per_slice=12,
     return
 
 
-def make_movie_each_comp(cnm, save_dir):
-    """Make movie for each component of z slice with largest area."""
+def make_movie_each_comp_one_plane(cnm, save_dir):
+    """Make movie for each component."""
+    plane_dirs =
     # Get images from load memmap
     imgs = funcs.load_memmap(cnm.mmap_file)
 
@@ -129,8 +136,19 @@ def make_movie_each_comp(cnm, save_dir):
 
 
 def main():
-    # Load all results
-    load_results()
+    # Get plane directories
+    plane_dirs = get_plane_dirs()
+
+    for plane_dir in plane_dirs:
+        # Load all results
+        load_results_one_plane()
+
+        # # Make movie for each components
+        # make_movie_each_comp_one_plane()
+        #
+        # # Make traces for each component
+        # make_traces_one_plane()
+
     return
 
 
