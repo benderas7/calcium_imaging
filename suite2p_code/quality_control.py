@@ -9,6 +9,7 @@ from skimage.segmentation import find_boundaries, mark_boundaries
 import matplotlib.pyplot as plt
 from cv2 import VideoWriter, VideoWriter_fourcc
 from skimage import io
+from tqdm import tqdm
 
 # Set constants
 DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/Test2/suite2p'
@@ -46,8 +47,10 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
     tif_fns = sorted(os.path.join(tif_dir, f) for f in os.listdir(tif_dir))
     arr = np.concatenate([np.array(io.imread(tif)) for tif in tif_fns])
 
-    for i, (stat_one_comp, F_one_comp) in enumerate(
-            zip(res['stat'], res['F'])):
+    for i, (stat_one_comp, F_one_comp) in enumerate(tqdm(
+            zip(res['stat'], res['F']), total=len(
+                res['stat']), desc='Plane {} Videos'.format(plane_dir.split(
+                    'e')[-1]))):
         # Make filename for video
         vid_fn = os.path.join(save_dir, 'comp{}.avi'.format(i))
 
