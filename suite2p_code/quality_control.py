@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 # Set constants
 DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/Test2/suite2p'
+OVERWRITE_VIDS = True
 ####
 
 
@@ -35,7 +36,8 @@ def load_results_one_plane(plane_dir):
 
 
 def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
-                                   save_dir_name='movies'):
+                                   save_dir_name='movies',
+                                   overwrite=OVERWRITE_VIDS):
     """Make movie for each component."""
     # Make directories to save videos if necessary
     save_dir = os.path.join(plane_dir, save_dir_name)
@@ -47,14 +49,13 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
     tif_fns = sorted(os.path.join(tif_dir, f) for f in os.listdir(tif_dir))
     arr = np.concatenate([np.array(io.imread(tif)) for tif in tif_fns])
 
-    for i, (stat_one_comp, F_one_comp) in enumerate(tqdm(
-            zip(res['stat'], res['F']), total=len(
-                res['stat']), desc='Plane {} Videos'.format(plane_dir.split(
-                    'e')[-1]))):
+    tqdm_desc = 'Plane {} Videos'.format(plane_dir.split('e')[-1])
+    for i, (stat_one_comp, F_one_comp) in enumerate(tqdm(zip(
+            res['stat'], res['F']), total=len(res['stat']), desc=tqdm_desc)):
         # Make filename for video
         vid_fn = os.path.join(save_dir, 'comp{}.avi'.format(i))
 
-        if not os.path.exists(vid_fn):
+        if not os.path.exists(vid_fn) or overwrite:
             # Get spatial footprint for component
             spat_fp = np.zeros(arr.shape[1:], dtype=np.int8)
             for x, y in zip(stat_one_comp['xpix'], stat_one_comp['ypix']):
