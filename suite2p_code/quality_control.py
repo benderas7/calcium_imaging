@@ -21,7 +21,7 @@ def get_plane_dirs(data_dir=DATA_DIR):
     return plane_dirs
 
 
-def load_results_one_plane(data_dir=DATA_DIR):
+def load_results_one_plane(data_dir):
     # Get all .npy files in data directory
     files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if
              f.endswith('.npy')]
@@ -141,7 +141,7 @@ def main():
 
     for plane_dir in plane_dirs:
         # Load all results
-        load_results_one_plane()
+        res = load_results_one_plane(plane_dir)
 
         # # Make movie for each components
         # make_movie_each_comp_one_plane()
