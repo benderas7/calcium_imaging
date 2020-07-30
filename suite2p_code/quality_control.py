@@ -69,6 +69,7 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
             arr_one_comp[arr_one_comp < 0] = 0
 
             # Draw boundary around component in video
+            # noinspection PyTypeChecker
             bound = find_boundaries(spat_fp, mode='inner')
             video_bound = [mark_boundaries(f, bound) for f in arr_one_comp]
 
@@ -145,7 +146,6 @@ def main():
 
         # Make traces for each component
         make_traces_one_plane(res, plane_dir)
-
     return
 
 
