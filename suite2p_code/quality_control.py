@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 # Set constants
 DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/Test2/suite2p'
-OVERWRITE_VIDS = True
+OVERWRITE_VIDS = False
 ####
 
 
@@ -57,7 +57,7 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
 
         if not os.path.exists(vid_fn) or overwrite:
             # Get spatial footprint for component
-            spat_fp = np.zeros(arr.shape[1:], dtype=np.int8)
+            spat_fp = np.zeros(arr.shape[1:])
             for x, y in zip(stat_one_comp['xpix'], stat_one_comp['ypix']):
                 spat_fp[y, x] = 1
 
@@ -82,67 +82,53 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
     return arr
 
 
-def make_traces_one_plane(cnm, imgs, save_dir, cols_c=None,
-                         n_comps_per_slice=12, n_cols=3, gain_color=16):
-    """Plot and save traces for each component in color that they are shown
-    in the video."""
-    # Get total number of components
-    n_comps_total = cnm.estimates.C.shape[0]
+def make_traces_one_plane(res, plane_dir, tif_dir_name='reg_tif', n_cols=3,
+                          n_comps_per_slice=12, save_dir_name='traces'):
+    """Plot and save traces for each component in plane."""
+    # Make directories to save videos if necessary
+    save_dir = os.path.join(plane_dir, save_dir_name)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
-    # Remove unnecessary dimensions and map values between 0 and 1
-    if cols_c is not None:
-        cols_c = np.squeeze(cols_c)
-        cols_c = cols_c / gain_color
-    else:
-        cols_c = [None] * n_comps_per_slice
+    # Get total number of components
+    n_comps_total = res['F'].shape[0]
+
+    # Get array of motion-corrected frames
+    tif_dir = os.path.join(plane_dir, tif_dir_name)
+    tif_fns = sorted(os.path.join(tif_dir, f) for f in os.listdir(tif_dir))
+    arr = np.concatenate([np.array(io.imread(tif)) for tif in tif_fns])
 
     count = 0
     for j in range(int(np.ceil(n_comps_total / n_comps_per_slice))):
         # Select desired components
         comp_slice = [val for val in range(j * n_comps_per_slice, (
-                j + 1) * n_comps_per_slice) if val < cnm.estimates.C.shape[0]]
-        cnm.estimates.select_components(idx_components=comp_slice)
+                j + 1) * n_comps_per_slice) if val < n_comps_total]
 
         # Extract traces and spatial footprints of components
-        traces = cnm.estimates.C
-        spat_fp = cnm.estimates.A.toarray().reshape(
-            imgs.shape[1:] + (-1,), order='F')
+        traces = res['F'][comp_slice, :]
+        spat_fps = np.zeros((n_comps_per_slice,) + arr.shape[1:])
+        for i, stat_one_comp in enumerate(res['stat'][comp_slice]):
+            for x, y in zip(stat_one_comp['xpix'], stat_one_comp['ypix']):
+                spat_fps[i, y, x] = 1
 
         # Plot traces and center maps
         n_rows = n_comps_per_slice // n_cols
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
-        fig2, ax2 = None, None
-        if cols_c[0] is not None:
-            fig2, ax2 = plt.subplots(figsize=(10, 10))
-        for i, (c, trace) in enumerate(zip(cols_c, traces)):
+        for i, trace in enumerate(traces):
             # Traces
-            axes.flatten()[i].plot(trace, c=c)
-            xyz = spat_fp[:, :, :, i]
+            axes.flatten()[i].plot(trace)
+            xy = spat_fps[i, :, :]
             axes.flatten()[i].set_title(
-                'Comp {}; Z:{}; ''Center: {}'.format(
-                    count, np.argwhere(np.sum(xyz, axis=(0, 1))).flatten(),
-                    [int(val) for val in center_of_mass(xyz)]))
+                'Comp {}; Center: {}'.format(
+                    count, [int(val) for val in center_of_mass(xy)]))
             axes.flatten()[i].set_xlabel('')
-
-            if c is not None:
-                # Center maps
-                ax2.scatter(*center_of_mass(xyz)[:2], c=c)
-                ax2.annotate(count, center_of_mass(xyz)[:2])
-                ax2.set_xlim([0, spat_fp.shape[0]])
-                ax2.set_ylim([0, spat_fp.shape[1]])
             count += 1
 
-        # Save figures
+        # Save figure
         fig.tight_layout()
         fig.savefig(os.path.join(save_dir, 'comps{}-{}'.format(
             comp_slice[0], comp_slice[-1])))
-        if cols_c[0] is not None:
-            fig2.tight_layout()
-            fig2.savefig(os.path.join(save_dir, 'comps{}-{}_centers'.format(
-                comp_slice[0], comp_slice[-1])))
-
-        # Restore components
-        cnm.estimates.restore_discarded_components()
+        plt.close()
     return
 
 
@@ -156,9 +142,9 @@ def main():
 
         # Make movie for each components
         make_movie_each_comp_one_plane(res, plane_dir)
-        #
-        # # Make traces for each component
-        # make_traces_one_plane()
+
+        # Make traces for each component
+        make_traces_one_plane(res, plane_dir)
 
     return
 
