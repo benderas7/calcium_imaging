@@ -33,70 +33,32 @@ def max_proj_vid(cnm, save_dir, compiled_dir=COMPILED_DIR,
                  save_name='max_proj'):
     """Make max-projection video of raw video (left panel) and
     motion-corrected video (right panel)."""
-    # Get images from load memmap
-    imgs = funcs.load_memmap(cnm.mmap_file)
+    # Determine save filename
+    save_fn = os.path.join(save_dir, '{}.avi'.format(save_name))
 
-    # Load raw video
-    h5 = [os.path.join(compiled_dir, f) for f in os.listdir(compiled_dir) if
-          f.endswith('.h5')][0]
-    with h5py.File(h5, 'r') as f:
-        arr = np.array(f[list(f.keys())[0]])
+    if not os.path.exists(save_fn):
+        # Get images from load memmap
+        imgs = funcs.load_memmap(cnm.mmap_file)
 
-    # Concatenate raw and motion-corrected videos
-    concat = np.concatenate((arr, imgs), axis=2)
+        # Load raw video
+        h5 = [os.path.join(compiled_dir, f) for f in os.listdir(
+            compiled_dir) if f.endswith('.h5')][0]
+        with h5py.File(h5, 'r') as f:
+            arr = np.array(f[list(f.keys())[0]])
 
-    # Perform max projection
-    max_proj = np.max(concat, axis=3)
+        # Concatenate raw and motion-corrected videos
+        concat = np.concatenate((arr, imgs), axis=2)
 
-    # Write video
-    fps = len(max_proj) // 60
-    video = VideoWriter(os.path.join(save_dir, '{}.avi'.format(save_name)),
-                        VideoWriter_fourcc(*'MJPG'), fps,
-                        max_proj.shape[1:][::-1], 0)
-    for frame in max_proj:
-        video.write((frame * 255).astype(np.uint8))
-    video.release()
-    return
+        # Perform max projection
+        max_proj = np.max(concat, axis=3)
 
-
-def make_traces(cnm, imgs, save_dir, n_comps_per_slice=12, n_cols=3):
-    """Plot and save traces for each component in color that they are shown
-    in the video."""
-    # Get total number of components
-    n_comps_total = cnm.estimates.C.shape[0]
-
-    count = 0
-    for j in range(int(np.ceil(n_comps_total / n_comps_per_slice))):
-        # Select desired components
-        comp_slice = [val for val in range(j * n_comps_per_slice, (
-                j + 1) * n_comps_per_slice) if val < cnm.estimates.C.shape[0]]
-        cnm.estimates.select_components(idx_components=comp_slice)
-
-        # Extract traces and spatial footprints of components
-        traces = cnm.estimates.C
-        spat_fp = cnm.estimates.A.toarray().reshape(
-            imgs.shape[1:] + (-1,), order='F')
-
-        # Plot traces
-        n_rows = n_comps_per_slice // n_cols
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
-        for i, trace in enumerate(traces):
-            axes.flatten()[i].plot(trace)
-            xyz = spat_fp[:, :, :, i]
-            axes.flatten()[i].set_title(
-                'Comp {}; Z:{}; ''Center: {}'.format(
-                    count, np.argwhere(np.sum(xyz, axis=(0, 1))).flatten(),
-                    [int(val) for val in center_of_mass(xyz)]))
-            axes.flatten()[i].set_xlabel('')
-            count += 1
-
-        # Save figure
-        fig.tight_layout()
-        fig.savefig(os.path.join(save_dir, 'comps{}-{}'.format(
-            comp_slice[0], comp_slice[-1])))
-
-        # Restore components
-        cnm.estimates.restore_discarded_components()
+        # Write video
+        fps = len(max_proj) // 60
+        video = VideoWriter(save_fn, VideoWriter_fourcc(*'MJPG'), fps,
+                            max_proj.shape[1:][::-1], 0)
+        for frame in max_proj:
+            video.write((frame * 255).astype(np.uint8))
+        video.release()
     return
 
 
@@ -142,6 +104,47 @@ def make_movie_each_comp(cnm, save_dir, overwrite=OVERWRITE_VIDS):
                 video.write((frame * 255).astype(np.uint8))
             video.release()
     return imgs
+
+
+def make_traces(cnm, imgs, save_dir, n_comps_per_slice=12, n_cols=3):
+    """Plot and save traces for each component in color that they are shown
+    in the video."""
+    # Get total number of components
+    n_comps_total = cnm.estimates.C.shape[0]
+
+    count = 0
+    for j in range(int(np.ceil(n_comps_total / n_comps_per_slice))):
+        # Select desired components
+        comp_slice = [val for val in range(j * n_comps_per_slice, (
+                j + 1) * n_comps_per_slice) if val < cnm.estimates.C.shape[0]]
+        cnm.estimates.select_components(idx_components=comp_slice)
+
+        # Extract traces and spatial footprints of components
+        traces = cnm.estimates.C
+        spat_fp = cnm.estimates.A.toarray().reshape(
+            imgs.shape[1:] + (-1,), order='F')
+
+        # Plot traces
+        n_rows = n_comps_per_slice // n_cols
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
+        for i, trace in enumerate(traces):
+            axes.flatten()[i].plot(trace)
+            xyz = spat_fp[:, :, :, i]
+            axes.flatten()[i].set_title(
+                'Comp {}; Z:{}; ''Center: {}'.format(
+                    count, np.argwhere(np.sum(xyz, axis=(0, 1))).flatten(),
+                    [int(val) for val in center_of_mass(xyz)]))
+            axes.flatten()[i].set_xlabel('')
+            count += 1
+
+        # Save figure
+        fig.tight_layout()
+        fig.savefig(os.path.join(save_dir, 'comps{}-{}'.format(
+            comp_slice[0], comp_slice[-1])))
+
+        # Restore components
+        cnm.estimates.restore_discarded_components()
+    return
 
 
 def main(results_dir=COMPILED_DIR):
