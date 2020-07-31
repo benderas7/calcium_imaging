@@ -292,25 +292,28 @@ def make_movie_each_comp(cnm, save_dir):
         spat_fp_max_z = spat_fp[:, :, max_z]
         imgs_max_z = imgs[:, :, :, max_z]
 
-        # Modulate range of video between min and max of component
-        roi_min = np.min(imgs_max_z[:, spat_fp_max_z > 0])
-        roi_max = np.max(imgs_max_z[:, spat_fp_max_z > 0])
-        imgs_max_z = (imgs_max_z - roi_min) / (roi_max - roi_min)
-        imgs_max_z[imgs_max_z > 1] = 1
-        imgs_max_z[imgs_max_z < 0] = 0
+        # Determine save filename
+        save_fn = os.path.join(save_dir, 'comp{}_z{}.avi'.format(i, max_z))
 
-        # Draw boundary around component in video
-        bound = find_boundaries(spat_fp_max_z, mode='inner')
-        video_bound = [mark_boundaries(f, bound) for f in imgs_max_z]
+        if not os.path.exists(save_fn):
+            # Modulate range of video between min and max of component
+            roi_min = np.min(imgs_max_z[:, spat_fp_max_z > 0])
+            roi_max = np.max(imgs_max_z[:, spat_fp_max_z > 0])
+            imgs_max_z = (imgs_max_z - roi_min) / (roi_max - roi_min)
+            imgs_max_z[imgs_max_z > 1] = 1
+            imgs_max_z[imgs_max_z < 0] = 0
 
-        # Save video
-        fps = len(video_bound) // 60
-        video = VideoWriter(os.path.join(save_dir, 'comp{}_z{}.avi'.format(
-            i, max_z)), VideoWriter_fourcc(*'MJPG'), fps, video_bound[0].shape[
-            :-1][::-1])
-        for frame in video_bound:
-            video.write((frame * 255).astype(np.uint8))
-        video.release()
+            # Draw boundary around component in video
+            bound = find_boundaries(spat_fp_max_z, mode='inner')
+            video_bound = [mark_boundaries(f, bound) for f in imgs_max_z]
+
+            # Save video
+            fps = len(video_bound) // 60
+            video = VideoWriter(save_fn, VideoWriter_fourcc(*'MJPG'), fps,
+                                video_bound[0].shape[:-1][::-1])
+            for frame in video_bound:
+                video.write((frame * 255).astype(np.uint8))
+            video.release()
     return imgs
 
 
