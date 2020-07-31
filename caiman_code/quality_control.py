@@ -13,6 +13,7 @@ import caiman_code.funcs as funcs
 from caiman_code.worm import COMPILED_DIR
 
 # Set parameters
+OVERWRITE_VIDS = False
 #####
 
 
@@ -85,7 +86,7 @@ def make_traces(cnm, imgs, save_dir, n_comps_per_slice=12, n_cols=3):
     return
 
 
-def make_movie_each_comp(cnm, save_dir):
+def make_movie_each_comp(cnm, save_dir, overwrite=OVERWRITE_VIDS):
     """Make movie for each component of z slice with largest area."""
     # Get images from load memmap
     imgs = funcs.load_memmap(cnm.mmap_file)
@@ -104,7 +105,7 @@ def make_movie_each_comp(cnm, save_dir):
         # Determine save filename
         save_fn = os.path.join(save_dir, 'comp{}_z{}.avi'.format(i, max_z))
 
-        if not os.path.exists(save_fn):
+        if not os.path.exists(save_fn) or overwrite:
             # Modulate range of video between min and max of component
             roi_min = np.min(imgs_max_z[:, spat_fp_max_z > 0])
             roi_max = np.max(imgs_max_z[:, spat_fp_max_z > 0])
