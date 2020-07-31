@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from cv2 import VideoWriter, VideoWriter_fourcc
 import caiman_code.funcs as funcs
 from caiman_code.worm import COMPILED_DIR
+from tqdm import tqdm
 
 # Set parameters
 OVERWRITE_VIDS = False
@@ -96,16 +97,18 @@ def make_movie_each_comp(cnm, save_dir, overwrite=OVERWRITE_VIDS):
         imgs.shape[1:] + (-1,), order='F')
     spat_fps = np.moveaxis(spat_fps, -1, 0)
 
-    for i, spat_fp in enumerate(spat_fps):
+    for i, spat_fp in enumerate(tqdm(spat_fps)):
         # Select z slice with largest area for component
         max_z = np.argmax(np.sum(spat_fp, axis=(0, 1)))
         spat_fp_max_z = spat_fp[:, :, max_z]
         imgs_max_z = imgs[:, :, :, max_z]
 
         # Determine save filename
-        save_fn = os.path.join(save_dir, 'comp{}_z{}.avi'.format(i, max_z))
+        save_name = 'comp{}_z{}.avi'.format(i, max_z)
+        made = np.sum([save_name in files for _, _, files in os.walk(
+            save_dir)])
 
-        if not os.path.exists(save_fn) or overwrite:
+        if not made or overwrite:
             # Modulate range of video between min and max of component
             roi_min = np.min(imgs_max_z[:, spat_fp_max_z > 0])
             roi_max = np.max(imgs_max_z[:, spat_fp_max_z > 0])
@@ -119,6 +122,7 @@ def make_movie_each_comp(cnm, save_dir, overwrite=OVERWRITE_VIDS):
 
             # Save video
             fps = len(video_bound) // 60
+            save_fn = os.path.join(save_dir, 'comp{}_z{}.avi'.format(i, max_z))
             video = VideoWriter(save_fn, VideoWriter_fourcc(*'MJPG'), fps,
                                 video_bound[0].shape[:-1][::-1])
             for frame in video_bound:

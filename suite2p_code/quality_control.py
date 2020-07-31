@@ -112,7 +112,7 @@ def make_traces_one_plane(res, plane_dir, tif_dir_name='reg_tif', n_cols=3,
             for x, y in zip(stat_one_comp['xpix'], stat_one_comp['ypix']):
                 spat_fps[i, y, x] = 1
 
-        # Plot traces and center maps
+        # Plot traces
         n_rows = n_comps_per_slice // n_cols
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
         for i, trace in enumerate(traces):
