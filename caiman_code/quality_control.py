@@ -31,6 +31,24 @@ def load_results(results_dir):
     return cnm
 
 
+def max_proj_vid(cnm, save_dir, save_name='max_proj'):
+    # Get images from load memmap
+    imgs = funcs.load_memmap(cnm.mmap_file)
+
+    # Perform max projection
+    max_proj = np.max(imgs, axis=3)
+
+    # Write video
+    fps = len(max_proj) // 60
+    video = VideoWriter(os.path.join(save_dir, '{}.avi'.format(save_name)),
+                        VideoWriter_fourcc(*'MJPG'), fps,
+                        max_proj.shape[1:][::-1], 0)
+    for frame in max_proj:
+        video.write((frame * 255).astype(np.uint8))
+    video.release()
+    return
+
+
 def _movie_one_slice(
         estimates, comp_slice, cols_c, dims, imgs, frame_range, slice_dir,
         q_max=99.75, q_min=2, magnification=1, gain_bck=0.2,
@@ -299,6 +317,9 @@ def make_movie_each_comp(cnm, save_dir):
 def main(do_sets=DO_SETS, results_dir=COMPILED_DIR):
     # Load results
     cnm = load_results(results_dir)
+
+    # Make max projection video
+    max_proj_vid(cnm, results_dir)
 
     if do_sets:
         # Make movie with colored sets of components for all z slices

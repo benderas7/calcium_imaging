@@ -15,7 +15,7 @@ LOG_LEVEL = logging.WARNING
 # Data and data display parameters
 IMG_DIR = '/Users/benderas/NeuroPAL/Test'
 CAIMAN_DIR = '/Users/benderas/NeuroPAL/Compiled/Test'
-COMPILED_DIR = '/Users/benderas/NeuroPAL/Compiled/Test2'
+COMPILED_DIR = '/Users/benderas/NeuroPAL/Compiled/Test_2p'
 ARR_FORMAT = '.h5'
 
 # Dataset dependent parameters
