@@ -46,6 +46,10 @@ def max_proj_vid(cnm, save_dir, compiled_dir=COMPILED_DIR,
         with h5py.File(h5, 'r') as f:
             arr = np.array(f[list(f.keys())[0]])
 
+        # Min-max normalize videos
+        imgs = (imgs - np.min(imgs)) / (np.max(imgs) - np.min(imgs))
+        arr = (arr - np.min(arr)) / (np.max(arr) - np.min(arr))
+
         # Concatenate raw and motion-corrected videos
         concat = np.concatenate((arr, imgs), axis=2)
 
