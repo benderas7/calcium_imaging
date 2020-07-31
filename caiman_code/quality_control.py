@@ -12,6 +12,7 @@ from cv2 import VideoWriter, VideoWriter_fourcc
 import caiman_code.funcs as funcs
 from caiman_code.worm import COMPILED_DIR
 from tqdm import tqdm
+import h5py
 
 # Set parameters
 OVERWRITE_VIDS = False
@@ -28,12 +29,24 @@ def load_results(results_dir):
     return cnm
 
 
-def max_proj_vid(cnm, save_dir, save_name='max_proj'):
+def max_proj_vid(cnm, save_dir, compiled_dir=COMPILED_DIR,
+                 save_name='max_proj'):
+    """Make max-projection video of raw video (left panel) and
+    motion-corrected video (right panel)."""
     # Get images from load memmap
     imgs = funcs.load_memmap(cnm.mmap_file)
 
+    # Load raw video
+    h5 = [os.path.join(compiled_dir, f) for f in os.listdir(compiled_dir) if
+          f.endswith('.h5')][0]
+    with h5py.File(h5, 'r') as f:
+        arr = np.array(f[list(f.keys())[0]])
+
+    # Concatenate raw and motion-corrected videos
+    concat = np.concatenate((arr, imgs), axis=2)
+
     # Perform max projection
-    max_proj = np.max(imgs, axis=3)
+    max_proj = np.max(concat, axis=3)
 
     # Write video
     fps = len(max_proj) // 60
