@@ -176,6 +176,12 @@ def sort_videos(movie_dir, folder_options=('good', 'bad', 'mc_prob')):
         src_path = os.path.join(movie_dir, comp)
         dest_path = os.path.join(movie_dir, opt, comp)
         os.rename(src_path, dest_path)
+
+    # Report number in each folder
+    print('NUMBER IN EACH FOLDER')
+    for dir_name in folder_options:
+        dir_path = os.path.join(movie_dir, dir_name)
+        print('{}: {}'.format(dir_name, len(os.listdir(dir_path))))
     return
 
 
