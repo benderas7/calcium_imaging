@@ -151,6 +151,32 @@ def make_traces(cnm, imgs, save_dir, n_comps_per_slice=12, n_cols=3):
     return
 
 
+def sort_videos(movie_dir, folder_options=('good', 'gad', 'mc_prob')):
+    """Sort videos by manual inspection of each component's trace and video."""
+    # Get movies in folder
+    movs = [f for f in os.listdir(movie_dir) if f.endswith('.avi')]
+
+    # Make subdirectories
+    for dir_name in folder_options:
+        dir_path = os.path.join(movie_dir, dir_name)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+    # Evaluate each component
+    for comp in movs:
+        opt = None
+        while opt not in folder_options:
+            opt = input('Inspect {} and its corresponding trace. '
+                        'Classify it as one of the following {}:'.format(
+                            comp, folder_options))
+
+        # Move to desired folder
+        src_path = os.path.join(movie_dir, comp)
+        dest_path = os.path.join(movie_dir, opt, comp)
+        os.rename(src_path, dest_path)
+    return
+
+
 def main(results_dir=COMPILED_DIR):
     # Load results
     cnm = load_results(results_dir)
