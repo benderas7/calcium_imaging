@@ -16,6 +16,7 @@ import h5py
 
 # Set parameters
 OVERWRITE_VIDS = False
+DO_VIDEO_SORT = True
 #####
 
 
@@ -177,7 +178,7 @@ def sort_videos(movie_dir, folder_options=('good', 'gad', 'mc_prob')):
     return
 
 
-def main(results_dir=COMPILED_DIR):
+def main(results_dir=COMPILED_DIR, do_video_sort=DO_VIDEO_SORT):
     # Load results
     cnm = load_results(results_dir)
 
@@ -195,6 +196,10 @@ def main(results_dir=COMPILED_DIR):
     if not os.path.exists(traces_dir):
         os.makedirs(traces_dir)
     make_traces(cnm, imgs, traces_dir)
+
+    # Do video sort if desired
+    if do_video_sort:
+        sort_videos(movie_dir)
     return
 
 
