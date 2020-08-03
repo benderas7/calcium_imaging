@@ -13,6 +13,7 @@ import caiman_code.funcs as funcs
 from caiman_code.worm import COMPILED_DIR
 from tqdm import tqdm
 import h5py
+from natsort import natsorted
 
 # Set parameters
 OVERWRITE_VIDS = False
@@ -152,10 +153,10 @@ def make_traces(cnm, imgs, save_dir, n_comps_per_slice=12, n_cols=3):
     return
 
 
-def sort_videos(movie_dir, folder_options=('good', 'gad', 'mc_prob')):
+def sort_videos(movie_dir, folder_options=('good', 'bad', 'mc_prob')):
     """Sort videos by manual inspection of each component's trace and video."""
     # Get movies in folder
-    movs = [f for f in os.listdir(movie_dir) if f.endswith('.avi')]
+    movs = natsorted([f for f in os.listdir(movie_dir) if f.endswith('.avi')])
 
     # Make subdirectories
     for dir_name in folder_options:
