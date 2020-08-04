@@ -168,8 +168,7 @@ def sort_videos(movie_dir, folder_options=('good', 'bad', 'mc_prob')):
     for comp in movs:
         opt = None
         while opt not in folder_options:
-            opt = input('Inspect {} and its corresponding trace. '
-                        'Classify it as one of the following {}:'.format(
+            opt = input('Classify {} as one of the following {}: '.format(
                             comp, folder_options))
 
         # Move to desired folder
