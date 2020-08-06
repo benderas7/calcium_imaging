@@ -10,14 +10,14 @@ from skimage.segmentation import find_boundaries, mark_boundaries
 import matplotlib.pyplot as plt
 from cv2 import VideoWriter, VideoWriter_fourcc
 import caiman_code.funcs as funcs
-from caiman_code.worm import COMPILED_DIR
 from tqdm import tqdm
 import h5py
 from natsort import natsorted
 
 # Set parameters
+DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/worm3_gcamp_Out'
 OVERWRITE_VIDS = False
-DO_VIDEO_SORT = True
+DO_VIDEO_SORT = False
 #####
 
 
@@ -31,8 +31,7 @@ def load_results(results_dir):
     return cnm
 
 
-def max_proj_vid(cnm, save_dir, compiled_dir=COMPILED_DIR,
-                 save_name='max_proj'):
+def max_proj_vid(cnm, save_dir, compiled_dir=DATA_DIR, save_name='max_proj'):
     """Make max-projection video of raw video (left panel) and
     motion-corrected video (right panel)."""
     # Determine save filename
@@ -184,7 +183,7 @@ def sort_videos(movie_dir, folder_options=('good', 'bad', 'mc_prob')):
     return
 
 
-def main(results_dir=COMPILED_DIR, do_video_sort=DO_VIDEO_SORT):
+def main(results_dir=DATA_DIR, do_video_sort=DO_VIDEO_SORT):
     # Load results
     cnm = load_results(results_dir)
 
