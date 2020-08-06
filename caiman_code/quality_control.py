@@ -102,7 +102,7 @@ def make_movie_each_comp(cnm, save_dir, overwrite=OVERWRITE_VIDS):
             video_bound = [mark_boundaries(f, bound) for f in imgs_max_z]
 
             # Save video
-            fps = len(video_bound) // 60
+            fps = len(video_bound) // 15
             save_fn = os.path.join(save_dir, 'comp{}_z{}.avi'.format(i, max_z))
             video = VideoWriter(save_fn, VideoWriter_fourcc(*'MJPG'), fps,
                                 video_bound[0].shape[:-1][::-1])
