@@ -12,8 +12,8 @@ from skimage import io
 from tqdm import tqdm
 
 # Set constants
-DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/Test2/suite2p'
-OVERWRITE_VIDS = False
+DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/worm1_gcamp_Out_2p/suite2p'
+OVERWRITE_VIDS = True
 ####
 
 
@@ -74,7 +74,7 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
             video_bound = [mark_boundaries(f, bound) for f in arr_one_comp]
 
             # Save video
-            fps = len(video_bound) // 60
+            fps = len(video_bound) // 15
             video = VideoWriter(vid_fn, VideoWriter_fourcc(*'MJPG'), fps,
                                 video_bound[0].shape[:-1][::-1])
             for frame in video_bound:
