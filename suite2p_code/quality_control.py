@@ -46,6 +46,12 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
+    # Delete all videos currently in folder if overwrite desired
+    if overwrite:
+        files = os.listdir(save_dir)
+        for f in files:
+            os.remove(os.path.join(save_dir, f))
+
     # Select only ROIs consideered possible cells
     comp_mask = res['iscell'][:, 0] == 1
     res = {key: val[comp_mask] for key, val in res.items() if val.shape}
@@ -61,7 +67,7 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
         # Make filename for video
         vid_fn = os.path.join(save_dir, 'comp{}.avi'.format(i))
 
-        if not os.path.exists(vid_fn) or overwrite:
+        if not os.path.exists(vid_fn):
             # Get spatial footprint for component
             spat_fp = np.zeros(arr.shape[1:])
             for x, y in zip(stat_one_comp['xpix'], stat_one_comp['ypix']):
