@@ -92,7 +92,7 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
             for frame in video_bound:
                 video.write((frame * 255).astype(np.uint8))
             video.release()
-    return arr
+    return arr, save_dir
 
 
 def make_traces_one_plane(res, plane_dir, tif_dir_name='reg_tif', n_cols=3,
@@ -196,14 +196,14 @@ def main(do_video_sort=DO_VIDEO_SORT):
         res = load_results_one_plane(plane_dir)
 
         # Make movie for each components
-        make_movie_each_comp_one_plane(res, plane_dir)
+        _, movie_dir = make_movie_each_comp_one_plane(res, plane_dir)
 
         # Make traces for each component
         make_traces_one_plane(res, plane_dir)
 
         # Do video sort if desired
         if do_video_sort:
-            sort_videos(plane_dir)
+            sort_videos(movie_dir)
     return
 
 
