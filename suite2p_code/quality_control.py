@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 # Set constants
 DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/worm1_gcamp_Out_2p/suite2p'
-OVERWRITE_VIDS = True
+OVERWRITE_VIDS = False
 ####
 
 
@@ -43,6 +43,10 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
     save_dir = os.path.join(plane_dir, save_dir_name)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
+
+    # Select only ROIs consideered possible cells
+    comp_mask = res['iscell'][:, 0] == 1
+    res = {key: val[comp_mask] for key, val in res.items() if val.shape}
 
     # Get array of motion-corrected frames
     tif_dir = os.path.join(plane_dir, tif_dir_name)
