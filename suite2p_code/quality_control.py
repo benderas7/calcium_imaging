@@ -14,8 +14,8 @@ from natsort import natsorted
 
 # Set constants
 DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/worm1_gcamp_Out_2p/suite2p'
-OVERWRITE_VIDS = True
-DO_VIDEO_SORT = False
+OVERWRITE_VIDS = False
+DO_VIDEO_SORT = True
 ####
 
 
@@ -96,12 +96,23 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
 
 
 def make_traces_one_plane(res, plane_dir, tif_dir_name='reg_tif', n_cols=3,
-                          n_comps_per_slice=12, save_dir_name='traces'):
+                          n_comps_per_slice=12, save_dir_name='traces',
+                          overwrite=OVERWRITE_VIDS):
     """Plot and save traces for each component in plane."""
     # Make directories to save videos if necessary
     save_dir = os.path.join(plane_dir, save_dir_name)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
+
+    # Delete all videos currently in folder if overwrite desired
+    if overwrite:
+        files = os.listdir(save_dir)
+        for f in files:
+            os.remove(os.path.join(save_dir, f))
+
+    # Select only ROIs consideered possible cells
+    comp_mask = res['iscell'][:, 0] == 1
+    res = {key: val[comp_mask] for key, val in res.items() if val.shape}
 
     # Get total number of components
     n_comps_total = res['F'].shape[0]
