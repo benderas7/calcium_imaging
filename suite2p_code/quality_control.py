@@ -65,9 +65,12 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
     for i, (stat_one_comp, F_one_comp) in enumerate(tqdm(zip(
             res['stat'], res['F']), total=len(res['stat']), desc=tqdm_desc)):
         # Make filename for video
-        vid_fn = os.path.join(save_dir, 'comp{}.avi'.format(i))
+        save_name = 'comp{}.avi'.format(i)
+        vid_fn = os.path.join(save_dir, save_name)
+        made = np.sum([save_name in files for _, _, files in os.walk(
+            save_dir)])
 
-        if not os.path.exists(vid_fn):
+        if not made:
             # Get spatial footprint for component
             spat_fp = np.zeros(arr.shape[1:])
             for x, y in zip(stat_one_comp['xpix'], stat_one_comp['ypix']):
