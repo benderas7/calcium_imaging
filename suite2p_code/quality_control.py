@@ -10,10 +10,12 @@ import matplotlib.pyplot as plt
 from cv2 import VideoWriter, VideoWriter_fourcc
 from skimage import io
 from tqdm import tqdm
+from natsort import natsorted
 
 # Set constants
 DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/worm1_gcamp_Out_2p/suite2p'
-OVERWRITE_VIDS = False
+OVERWRITE_VIDS = True
+DO_VIDEO_SORT = False
 ####
 
 
@@ -137,7 +139,38 @@ def make_traces_one_plane(res, plane_dir, tif_dir_name='reg_tif', n_cols=3,
     return
 
 
-def main():
+def sort_videos(movie_dir, folder_options=('good', 'bad', 'mc_prob')):
+    """Sort videos by manual inspection of each component's trace and video."""
+    # Get movies in folder
+    movs = natsorted([f for f in os.listdir(movie_dir) if f.endswith('.avi')])
+
+    # Make subdirectories
+    for dir_name in folder_options:
+        dir_path = os.path.join(movie_dir, dir_name)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+    # Evaluate each component
+    for comp in movs:
+        opt = None
+        while opt not in folder_options:
+            opt = input('Classify {} as one of the following {}: '.format(
+                            comp, folder_options))
+
+        # Move to desired folder
+        src_path = os.path.join(movie_dir, comp)
+        dest_path = os.path.join(movie_dir, opt, comp)
+        os.rename(src_path, dest_path)
+
+    # Report number in each folder
+    print('NUMBER IN EACH FOLDER')
+    for dir_name in folder_options:
+        dir_path = os.path.join(movie_dir, dir_name)
+        print('{}: {}'.format(dir_name, len(os.listdir(dir_path))))
+    return
+
+
+def main(do_video_sort=DO_VIDEO_SORT):
     # Get plane directories
     plane_dirs = get_plane_dirs()
 
@@ -150,6 +183,10 @@ def main():
 
         # Make traces for each component
         make_traces_one_plane(res, plane_dir)
+
+        # Do video sort if desired
+        if do_video_sort:
+            sort_videos(plane_dir)
     return
 
 
