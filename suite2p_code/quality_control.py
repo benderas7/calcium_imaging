@@ -184,9 +184,23 @@ def sort_videos(movie_dir, folder_options=('good', 'bad', 'mc_prob')):
 
     # Report number in each folder
     print('NUMBER IN EACH FOLDER')
+    counts = {}
     for dir_name in folder_options:
         dir_path = os.path.join(movie_dir, dir_name)
-        print('{}: {}'.format(dir_name, len(os.listdir(dir_path))))
+        counts[dir_name] = len(os.listdir(dir_path))
+        print('{}: {}'.format(dir_name, counts[dir_name]))
+    return counts
+
+
+def total_count(plane_counts):
+    """Print total number of videos in each folder from all planes."""
+    # Sum across planes
+    tots = {k: sum([d[k] for d in plane_counts]) for k in plane_counts[0]}
+
+    # Print number of each from all planes
+    print('\nTOTAL NUMBER IN EACH FOLDER ACROSS PLANES')
+    for key, val in tots.items():
+        print('{}: {}'.format(key, val))
     return
 
 
@@ -194,6 +208,8 @@ def main(do_video_sort=DO_VIDEO_SORT):
     # Get plane directories
     plane_dirs = get_plane_dirs()
 
+    # Initialize plane counts
+    plane_counts = []
     for plane_dir in plane_dirs:
         # Load all results
         res = load_results_one_plane(plane_dir)
@@ -206,7 +222,10 @@ def main(do_video_sort=DO_VIDEO_SORT):
 
         # Do video sort if desired
         if do_video_sort:
-            sort_videos(movie_dir)
+            plane_counts.append(sort_videos(movie_dir))
+
+    # Report total number across planes from each folder
+    total_count(plane_counts)
     return
 
 
