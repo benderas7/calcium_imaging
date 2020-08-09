@@ -13,9 +13,9 @@ from tqdm import tqdm
 from natsort import natsorted
 
 # Set constants
-DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/worm1_gcamp_Out_2p/suite2p'
-OVERWRITE_VIDS = False
-DO_VIDEO_SORT = True
+DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/worm5_gcamp_Out_2p/suite2p'
+OVERWRITE_VIDS = True
+DO_VIDEO_SORT = False
 ####
 
 
@@ -225,7 +225,8 @@ def main(do_video_sort=DO_VIDEO_SORT):
             plane_counts.append(sort_videos(movie_dir))
 
     # Report total number across planes from each folder
-    total_count(plane_counts)
+    if do_video_sort:
+        total_count(plane_counts)
     return
 
 
