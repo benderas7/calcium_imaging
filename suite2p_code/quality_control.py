@@ -13,9 +13,10 @@ from tqdm import tqdm
 from natsort import natsorted
 
 # Set constants
-DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/worm5_gcamp_Out_2p/suite2p'
+DATA_DIR = '/Users/benderas/NeuroPAL/Compiled/worm3_gcamp_Out_2p/suite2p'
+MOVIE_LEN = 10  # in seconds
 OVERWRITE_VIDS = True
-DO_VIDEO_SORT = False
+DO_VIDEO_SORT = True
 ####
 
 
@@ -38,7 +39,7 @@ def load_results_one_plane(plane_dir):
 
 
 def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
-                                   save_dir_name='movies',
+                                   save_dir_name='movies', movie_len=MOVIE_LEN,
                                    overwrite=OVERWRITE_VIDS):
     """Make movie for each component."""
     # Make directories to save videos if necessary
@@ -89,7 +90,7 @@ def make_movie_each_comp_one_plane(res, plane_dir, tif_dir_name='reg_tif',
             video_bound = [mark_boundaries(f, bound) for f in arr_one_comp]
 
             # Save video
-            fps = len(video_bound) // 15
+            fps = len(video_bound) // movie_len
             video = VideoWriter(vid_fn, VideoWriter_fourcc(*'MJPG'), fps,
                                 video_bound[0].shape[:-1][::-1])
             for frame in video_bound:
